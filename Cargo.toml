@@ -1,0 +1,62 @@
+[package]
+name = "tui-rating"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sorin Irimies <sorinirimies@gmail.com>"]
+license = "MIT"
+description = "A customizable rating (stars, hearts, ...) widget for ratatui"
+repository = "https://github.com/sorinirimies/tui-rating"
+readme = "README.md"
+keywords = ["tui", "rating", "ratatui", "terminal", "widget"]
+categories = ["command-line-interface", "gui", "visualization", "rendering"]
+rust-version = "1.88.0"
+exclude = [
+    ".gitea/**",
+    ".github/**",
+    ".zed/**",
+    "docs/**",
+    "examples/vhs/**",
+    "scripts/**",
+    "cliff.toml",
+    "justfile",
+]
+
+[dependencies]
+ratatui = { version = "0.30", default-features = false }
+
+[dev-dependencies]
+anyhow = "1.0"
+crossterm = "0.29"
+ratatui = { version = "0.30", features = ["crossterm"] }
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "interactive"
+path = "examples/interactive.rs"
+
+[[example]]
+name = "half_stars"
+path = "examples/half_stars.rs"
+
+[[example]]
+name = "symbols"
+path = "examples/symbols.rs"
+
+[[example]]
+name = "custom"
+path = "examples/custom.rs"
+
+[[example]]
+name = "alignment"
+path = "examples/alignment.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
