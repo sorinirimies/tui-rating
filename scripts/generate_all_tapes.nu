@@ -40,6 +40,13 @@ def main [] {
     print $"($blue)📼 Found ($total) tape\(s\) to generate($reset)"
     print ""
 
+    # Pre-build so GIFs never show compilation
+    print $"($blue)🔨 Building examples...($reset)"
+    let build = (do { ^cargo build --release --examples } | complete)
+    if $build.exit_code != 0 {
+        error make { msg: $"($red)❌ cargo build --release --examples failed($reset)\n($build.stderr)" }
+    }
+
     mut succeeded = 0
     mut failed = 0
     mut failed_names = []
