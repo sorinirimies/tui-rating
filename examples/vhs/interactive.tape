@@ -30,6 +30,10 @@ Left
 Sleep 0.3s
 Type "5"
 Sleep 1s
+Type "t"
+Sleep 0.7s
+Type "t"
+Sleep 1s
 
 Hide
 Type "q"

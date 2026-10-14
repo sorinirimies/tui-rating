@@ -8,6 +8,8 @@ use ratatui::{
     widgets::{Block, Widget},
 };
 
+use tui_nuances::{Theme, Themed};
+
 use crate::{RatingState, RatingSymbols};
 
 /// How a single rating item is drawn.
@@ -46,16 +48,40 @@ pub struct Rating<'a> {
     max: usize,
     half_steps: bool,
     symbols: RatingSymbols,
-    filled_style: Style,
+    filled_style: Option<Style>,
     half_style: Option<Style>,
-    empty_style: Style,
+    empty_style: Option<Style>,
     label: Option<String>,
-    label_style: Style,
-    value_style: Style,
+    label_style: Option<Style>,
+    value_style: Option<Style>,
+    themed: Option<ThemeStyles>,
     show_value: bool,
     gap: u16,
     alignment: Alignment,
     block: Option<Block<'a>>,
+}
+
+/// Styles derived from a [`Theme`].
+#[derive(Debug, Clone, Copy)]
+struct ThemeStyles {
+    filled: Style,
+    empty: Style,
+    label: Style,
+    value: Style,
+}
+
+impl Themed for Rating<'_> {
+    /// Maps `accent` → filled items, `disabled` → empty items,
+    /// `foreground` → label, `muted` → value text.
+    fn apply_theme(mut self, theme: &Theme) -> Self {
+        self.themed = Some(ThemeStyles {
+            filled: Style::default().fg(theme.accent),
+            empty: Style::default().fg(theme.disabled),
+            label: Style::default().fg(theme.foreground),
+            value: Style::default().fg(theme.muted),
+        });
+        self
+    }
 }
 
 impl<'a> Rating<'a> {
@@ -71,12 +97,13 @@ impl<'a> Rating<'a> {
             max,
             half_steps: false,
             symbols: RatingSymbols::default(),
-            filled_style: Style::default().fg(Color::Yellow),
+            filled_style: None,
             half_style: None,
-            empty_style: Style::default().fg(Color::DarkGray),
+            empty_style: None,
             label: None,
-            label_style: Style::default(),
-            value_style: Style::default(),
+            label_style: None,
+            value_style: None,
+            themed: None,
             show_value: false,
             gap: 1,
             alignment: Alignment::Left,
@@ -108,14 +135,14 @@ impl<'a> Rating<'a> {
     /// Sets the style of filled items.
     #[must_use]
     pub fn filled_style(mut self, style: Style) -> Self {
-        self.filled_style = style;
+        self.filled_style = Some(style);
         self
     }
 
     /// Shortcut: sets the foreground colour of filled items.
     #[must_use]
     pub fn filled_color(mut self, color: Color) -> Self {
-        self.filled_style = self.filled_style.fg(color);
+        self.filled_style = Some(self.filled_style.unwrap_or_default().fg(color));
         self
     }
 
@@ -129,14 +156,14 @@ impl<'a> Rating<'a> {
     /// Sets the style of empty items.
     #[must_use]
     pub fn empty_style(mut self, style: Style) -> Self {
-        self.empty_style = style;
+        self.empty_style = Some(style);
         self
     }
 
     /// Shortcut: sets the foreground colour of empty items.
     #[must_use]
     pub fn empty_color(mut self, color: Color) -> Self {
-        self.empty_style = self.empty_style.fg(color);
+        self.empty_style = Some(self.empty_style.unwrap_or_default().fg(color));
         self
     }
 
@@ -150,7 +177,7 @@ impl<'a> Rating<'a> {
     /// Sets the label style.
     #[must_use]
     pub fn label_style(mut self, style: Style) -> Self {
-        self.label_style = style;
+        self.label_style = Some(style);
         self
     }
 
@@ -164,7 +191,7 @@ impl<'a> Rating<'a> {
     /// Sets the style of the value text.
     #[must_use]
     pub fn value_style(mut self, style: Style) -> Self {
-        self.value_style = style;
+        self.value_style = Some(style);
         self
     }
 
@@ -187,6 +214,33 @@ impl<'a> Rating<'a> {
     pub fn block(mut self, block: Block<'a>) -> Self {
         self.block = Some(block);
         self
+    }
+
+    /// Styles the widget from a shared [`Theme`] (see [`Themed`]).
+    ///
+    /// Accepts `&Theme` or `Theme`. Explicit styles/colors set through
+    /// `filled_style`, `filled_color`, `half_style`, `empty_style`,
+    /// `empty_color`, `label_style` and `value_style` always win over the
+    /// theme, regardless of call order. Without a theme the original default
+    /// look is used.
+    #[must_use]
+    pub fn theme(self, theme: impl Into<Theme>) -> Self {
+        self.apply_theme(&theme.into())
+    }
+
+    fn resolved(&self) -> (Style, Style, Style, Style) {
+        let t = self.themed.as_ref();
+        let filled = self
+            .filled_style
+            .or(t.map(|t| t.filled))
+            .unwrap_or_else(|| Style::default().fg(Color::Yellow));
+        let empty = self
+            .empty_style
+            .or(t.map(|t| t.empty))
+            .unwrap_or_else(|| Style::default().fg(Color::DarkGray));
+        let label = self.label_style.or(t.map(|t| t.label)).unwrap_or_default();
+        let value = self.value_style.or(t.map(|t| t.value)).unwrap_or_default();
+        (filled, empty, label, value)
     }
 
     /// The value after snapping to the display granularity (`1.0` or `0.5`).
@@ -222,9 +276,10 @@ impl<'a> Rating<'a> {
 
     /// Builds the rendered line (label, items, value text) without a block.
     pub fn line(&self) -> Line<'a> {
+        let (filled_style, empty_style, label_style, value_style) = self.resolved();
         let mut spans: Vec<Span<'a>> = Vec::new();
         if let Some(label) = &self.label {
-            spans.push(Span::styled(format!("{label} "), self.label_style));
+            spans.push(Span::styled(format!("{label} "), label_style));
         }
         let gap = " ".repeat(self.gap as usize);
         for i in 0..self.max {
@@ -232,23 +287,17 @@ impl<'a> Rating<'a> {
                 spans.push(Span::raw(gap.clone()));
             }
             let (glyph, style) = match self.fill_at(i) {
-                ItemFill::Full => (&self.symbols.filled, self.filled_style),
+                ItemFill::Full => (&self.symbols.filled, filled_style),
                 ItemFill::Half => match &self.symbols.half {
-                    Some(h) => (h, self.half_style.unwrap_or(self.filled_style)),
-                    None => (
-                        &self.symbols.empty,
-                        self.half_style.unwrap_or(self.filled_style),
-                    ),
+                    Some(h) => (h, self.half_style.unwrap_or(filled_style)),
+                    None => (&self.symbols.empty, self.half_style.unwrap_or(filled_style)),
                 },
-                ItemFill::Empty => (&self.symbols.empty, self.empty_style),
+                ItemFill::Empty => (&self.symbols.empty, empty_style),
             };
             spans.push(Span::styled(glyph.clone(), style));
         }
         if self.show_value {
-            spans.push(Span::styled(
-                format!(" {}", self.value_text()),
-                self.value_style,
-            ));
+            spans.push(Span::styled(format!(" {}", self.value_text()), value_style));
         }
         Line::from(spans).alignment(self.alignment)
     }
@@ -405,5 +454,45 @@ mod tests {
         assert_eq!(r.fill_at(2), ItemFill::Half);
         assert_eq!(r.fill_at(1), ItemFill::Full);
         assert_eq!(r.fill_at(3), ItemFill::Empty);
+    }
+}
+
+#[cfg(test)]
+mod theme_tests {
+    use super::*;
+
+    fn fg(r: Rating<'_>, x: u16) -> Option<Color> {
+        let area = Rect::new(0, 0, 20, 1);
+        let mut buf = Buffer::empty(area);
+        r.render(area, &mut buf);
+        buf[(x, 0)].style().fg
+    }
+
+    #[test]
+    fn maps_roles() {
+        let t = Theme::nord();
+        let r = Rating::new(1.0, 2).theme(&t);
+        assert_eq!(fg(r.clone(), 0), Some(t.accent));
+        assert_eq!(fg(r, 2), Some(t.disabled));
+    }
+
+    #[test]
+    fn explicit_wins_any_order() {
+        let t = Theme::nord();
+        let a = Rating::new(1.0, 2).filled_color(Color::Red).theme(&t);
+        let b = Rating::new(1.0, 2).theme(&t).filled_color(Color::Red);
+        assert_eq!(fg(a, 0), Some(Color::Red));
+        assert_eq!(fg(b, 0), Some(Color::Red));
+    }
+
+    #[test]
+    fn all_themes_render() {
+        for t in Theme::all() {
+            let r = Rating::new(2.5, 5)
+                .half_steps(true)
+                .label("x")
+                .show_value(true);
+            let _ = fg(r.theme(t), 0);
+        }
     }
 }

@@ -1,6 +1,6 @@
 //! Interactive example - several ratings you can edit.
 //!
-//! Controls: ↑/↓ or j/k select, ←/→ or h/l change, 0-9 set, c clear, q/Esc quit.
+//! Controls: ↑/↓ or j/k select, ←/→ or h/l change, 0-9 set, c clear, t/T theme, q/Esc quit.
 
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -10,7 +10,7 @@ use ratatui::{
     widgets::{Block, Paragraph},
     Frame,
 };
-use tui_rating::{Rating, RatingState, RatingSymbols};
+use tui_rating::{Rating, RatingState, RatingSymbols, ThemeSwitcher};
 
 struct Item {
     label: &'static str,
@@ -22,6 +22,7 @@ struct Item {
 struct App {
     items: Vec<Item>,
     selected: usize,
+    themes: ThemeSwitcher,
 }
 
 impl App {
@@ -66,6 +67,7 @@ impl App {
                 ),
             ],
             selected: 0,
+            themes: ThemeSwitcher::new(),
         }
     }
 
@@ -79,6 +81,12 @@ impl App {
             KeyCode::Right | KeyCode::Char('l') => cur.increment(),
             KeyCode::Left | KeyCode::Char('h') => cur.decrement(),
             KeyCode::Char('c') => cur.clear(),
+            KeyCode::Char('t') => {
+                self.themes.next();
+            }
+            KeyCode::Char('T') => {
+                self.themes.prev();
+            }
             KeyCode::Char(d @ '0'..='9') => cur.set_items(d as usize - '0' as usize),
             _ => {}
         }
@@ -100,6 +108,7 @@ impl App {
             frame.render_widget(
                 Rating::from_state(&item.state)
                     .symbols(item.symbols.clone())
+                    .theme(self.themes.current())
                     .filled_color(item.color)
                     .label(item.label)
                     .label_style(label_style)
@@ -109,7 +118,10 @@ impl App {
             );
         }
         frame.render_widget(
-            Paragraph::new("↑/↓ select  ←/→ change  0-9 set  c clear  q quit"),
+            Paragraph::new(format!(
+                "↑/↓ select  ←/→ change  0-9 set  c clear  t/T theme ({})  q quit",
+                self.themes.current().name
+            )),
             areas[self.items.len()],
         );
     }

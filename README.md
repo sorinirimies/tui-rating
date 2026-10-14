@@ -72,6 +72,27 @@ let rating = Rating::from_state(&state)
 
 Half items use the symbol set's `half` glyph when present (circles, squares, ascii). Otherwise the empty glyph is drawn in the filled style (outlined star/heart).
 
+## 🎨 Theming
+
+Optional and backward compatible: without a theme the default look is unchanged.
+Colors come from the shared [`tui-nuances`](https://github.com/sorinirimies/tui-nuances) `Theme`
+(re-exported as `tui_rating::Theme`).
+
+```rust
+use tui_rating::{Rating, Theme, Themed};
+
+let theme = Theme::by_name("nord").unwrap_or_default();
+let rating = Rating::new(3.0, 5).theme(&theme).show_value(true);
+// or: Rating::new(3.0, 5).apply_theme(&theme) / .themed(&app_theme)
+```
+
+Mapping: `accent` → filled/half items, `disabled` → empty items, `foreground` → label, `muted` → value text.
+**Precedence:** explicit `filled_style/filled_color/half_style/empty_style/empty_color/label_style/value_style`
+always win over the theme, whether called before or after `.theme()`. The `Block` is not themed (style it yourself, e.g. `theme.border_style(true)`).
+
+To pass your app's theme, implement `tui_rating::ThemeProvider` for it (then `.themed(&app_theme)`),
+or `impl From<&AppTheme> for Theme` and call `.theme(&app_theme)`.
+
 ## 🎬 Examples
 
 Run with `cargo run --example <name>` (or `just example-<name>`).
@@ -79,7 +100,7 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 | Example | Description |
 |---------|-------------|
 | `basic` | Static rating in a bordered block |
-| `interactive` | Multiple editable ratings with different symbols |
+| `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme |
 | `half_stars` | Half-step ratings, toggle with `t` |
 | `symbols` | All symbol presets |
 | `custom` | Emoji, RGB colors, gaps, 10-item scale |
