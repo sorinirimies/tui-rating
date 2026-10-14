@@ -17,6 +17,7 @@ A customizable **rating widget** (stars, hearts, circles, …) for [ratatui](htt
 - 🖌️ Independent styles for filled / half / empty items, label and value
 - 📐 Left / center / right alignment, configurable gap
 - 🔲 Optional `Block` border
+- 🎨 Optional shared theming via the `theme` feature (`tui-nuances`)
 - 🧠 `RatingState` with clamping, increment/decrement, ratios
 - 🛡️ Safe with out-of-range / `NaN` values and zero-size areas
 
@@ -74,7 +75,13 @@ Half items use the symbol set's `half` glyph when present (circles, squares, asc
 
 ## 🎨 Theming
 
-Optional and backward compatible: without a theme the default look is unchanged.
+Optional Cargo feature (off by default, no extra dependency). Enable it:
+
+```toml
+tui-rating = { version = "0.1", features = ["theme"] }
+```
+
+Backward compatible: without a theme the default look is unchanged.
 Colors come from the shared [`tui-nuances`](https://github.com/sorinirimies/tui-nuances) `Theme`
 (re-exported as `tui_rating::Theme`).
 
@@ -100,7 +107,7 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 | Example | Description |
 |---------|-------------|
 | `basic` | Static rating in a bordered block |
-| `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme |
+| `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme (needs `--features theme`) |
 | `half_stars` | Half-step ratings, toggle with `t` |
 | `symbols` | All symbol presets |
 | `custom` | Emoji, RGB colors, gaps, 10-item scale |

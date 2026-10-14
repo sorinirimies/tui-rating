@@ -23,7 +23,12 @@ exclude = [
 
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
-tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances" }
+tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
+
+[features]
+default = []
+# Shared theming via tui-nuances (`Rating::theme`, `Themed`, `Theme`).
+theme = ["dep:tui-nuances"]
 
 [dev-dependencies]
 anyhow = "1.0"
@@ -37,6 +42,7 @@ path = "examples/basic.rs"
 [[example]]
 name = "interactive"
 path = "examples/interactive.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "half_stars"

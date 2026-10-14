@@ -8,6 +8,7 @@ use ratatui::{
     widgets::{Block, Widget},
 };
 
+#[cfg(feature = "theme")]
 use tui_nuances::{Theme, Themed};
 
 use crate::{RatingState, RatingSymbols};
@@ -54,6 +55,7 @@ pub struct Rating<'a> {
     label: Option<String>,
     label_style: Option<Style>,
     value_style: Option<Style>,
+    #[cfg(feature = "theme")]
     themed: Option<ThemeStyles>,
     show_value: bool,
     gap: u16,
@@ -61,7 +63,8 @@ pub struct Rating<'a> {
     block: Option<Block<'a>>,
 }
 
-/// Styles derived from a [`Theme`].
+/// Styles derived from a theme.
+#[cfg_attr(not(feature = "theme"), allow(dead_code))]
 #[derive(Debug, Clone, Copy)]
 struct ThemeStyles {
     filled: Style,
@@ -70,6 +73,7 @@ struct ThemeStyles {
     value: Style,
 }
 
+#[cfg(feature = "theme")]
 impl Themed for Rating<'_> {
     /// Maps `accent` → filled items, `disabled` → empty items,
     /// `foreground` → label, `muted` → value text.
@@ -103,6 +107,7 @@ impl<'a> Rating<'a> {
             label: None,
             label_style: None,
             value_style: None,
+            #[cfg(feature = "theme")]
             themed: None,
             show_value: false,
             gap: 1,
@@ -224,12 +229,16 @@ impl<'a> Rating<'a> {
     /// theme, regardless of call order. Without a theme the original default
     /// look is used.
     #[must_use]
+    #[cfg(feature = "theme")]
     pub fn theme(self, theme: impl Into<Theme>) -> Self {
         self.apply_theme(&theme.into())
     }
 
     fn resolved(&self) -> (Style, Style, Style, Style) {
+        #[cfg(feature = "theme")]
         let t = self.themed.as_ref();
+        #[cfg(not(feature = "theme"))]
+        let t: Option<&ThemeStyles> = None;
         let filled = self
             .filled_style
             .or(t.map(|t| t.filled))
@@ -457,6 +466,7 @@ mod tests {
     }
 }
 
+#[cfg(feature = "theme")]
 #[cfg(test)]
 mod theme_tests {
     use super::*;

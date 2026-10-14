@@ -30,4 +30,5 @@ mod symbols;
 pub use rating::{ItemFill, Rating};
 pub use state::RatingState;
 pub use symbols::RatingSymbols;
+#[cfg(feature = "theme")]
 pub use tui_nuances::{Status, Theme, ThemeProvider, ThemeSwitcher, Themed};

@@ -25,7 +25,7 @@ build-release:
 
 # Run the interactive example
 run:
-    cargo run --example interactive
+    cargo run --features theme --example interactive
 
 # Run basic example
 example-basic:
@@ -33,7 +33,7 @@ example-basic:
 
 # Run interactive example
 example-interactive:
-    cargo run --example interactive
+    cargo run --features theme --example interactive
 
 # Run half_stars example
 example-half-stars:
@@ -56,7 +56,7 @@ examples: example-basic example-interactive example-half-stars example-symbols e
 
 # Run tests
 test:
-    cargo test
+    cargo test --all-features
 
 # Test the nushell scripts
 test-scripts:
@@ -80,7 +80,7 @@ fmt-check:
 
 # Run clippy linter
 clippy:
-    cargo clippy -- -D warnings
+    cargo clippy --all-features -- -D warnings
 
 # Run all checks (fmt, clippy, test)
 check-all: fmt-check clippy test test-scripts

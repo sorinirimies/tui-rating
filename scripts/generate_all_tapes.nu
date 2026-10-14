@@ -42,9 +42,9 @@ def main [] {
 
     # Pre-build so GIFs never show compilation
     print $"($blue)🔨 Building examples...($reset)"
-    let build = (do { ^cargo build --release --examples } | complete)
+    let build = (do { ^cargo build --release --examples --features theme } | complete)
     if $build.exit_code != 0 {
-        error make { msg: $"($red)❌ cargo build --release --examples failed($reset)\n($build.stderr)" }
+        error make { msg: $"($red)❌ cargo build --release --examples --features theme failed($reset)\n($build.stderr)" }
     }
 
     mut succeeded = 0
