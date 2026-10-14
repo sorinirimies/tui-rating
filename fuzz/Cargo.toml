@@ -1,0 +1,41 @@
+[package]
+name = "tui-rating-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+ratatui = { version = "0.30", default-features = false }
+tui-rating = { path = ".." }
+
+# Not part of the main crate (needs nightly).
+[workspace]
+
+[[bin]]
+name = "render_rating"
+path = "fuzz_targets/render_rating.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "state_ops"
+path = "fuzz_targets/state_ops.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "symbols_line"
+path = "fuzz_targets/symbols_line.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "text_inputs"
+path = "fuzz_targets/text_inputs.rs"
+test = false
+doc = false

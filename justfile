@@ -15,6 +15,22 @@ install-tools:
     @command -v git-cliff >/dev/null 2>&1 || cargo install git-cliff
     @echo "✅ All tools installed!"
 
+# Audit dependencies for advisories (cargo install cargo-audit)
+audit:
+    cargo audit
+
+# Check advisories, licenses, bans and sources (cargo install cargo-deny)
+deny:
+    cargo deny check
+
+# List fuzz targets (needs nightly + cargo install cargo-fuzz)
+fuzz-list:
+    cargo +nightly fuzz list
+
+# Fuzz one target (see `just fuzz-list`); SECONDS bounds the run
+fuzz target seconds="30":
+    cargo +nightly fuzz run {{target}} -- -max_total_time={{seconds}}
+
 # Build the project
 build:
     cargo build

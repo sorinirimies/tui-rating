@@ -107,5 +107,7 @@ jobs:
         uses: hustcer/setup-nu@v3
         with:
           version: "*"
+      - name: Rust components (rustfmt, clippy)
+        run: rustup component add rustfmt clippy
       - name: Test scripts
         run: nu scripts/test_scripts.nu

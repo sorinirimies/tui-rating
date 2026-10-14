@@ -112,5 +112,7 @@ jobs:
           curl -fsSL "$url" | tar -xz -C /tmp
           sudo cp /tmp/nu-*/nu /usr/local/bin/nu 2>/dev/null || cp /tmp/nu-*/nu /usr/local/bin/nu
           nu --version
+      - name: Rust components (rustfmt, clippy)
+        run: rustup component add rustfmt clippy
       - name: Test scripts
         run: nu scripts/test_scripts.nu

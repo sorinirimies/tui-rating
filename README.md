@@ -131,6 +131,15 @@ All automation lives in [`scripts/`](scripts/) and is written in Nushell. CI run
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## 🧪 Fuzzing
+
+Fuzz targets live in `fuzz/` (needs nightly + `cargo install cargo-fuzz`):
+
+```sh
+cargo +nightly fuzz list
+cargo +nightly fuzz run render_rating
+```
+
 ## 📄 License
 
 MIT © Sorin Albu-Irimies
