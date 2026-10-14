@@ -95,9 +95,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # hustcer/setup-nu needs Node >= 20; the runner image ships Node 18,
+      # so install the prebuilt binary directly.
       - name: Install Nushell
-        uses: hustcer/setup-nu@v3
-        with:
-          version: "*"
+        run: |
+          url=$(curl -fsSL https://api.github.com/repos/nushell/nushell/releases/latest \
+            | grep -o 'https://[^"]*x86_64-unknown-linux-gnu.tar.gz' | head -1)
+          curl -fsSL "$url" | tar -xz -C /tmp
+          sudo cp /tmp/nu-*/nu /usr/local/bin/nu 2>/dev/null || cp /tmp/nu-*/nu /usr/local/bin/nu
+          nu --version
       - name: Test scripts
         run: nu scripts/test_scripts.nu
