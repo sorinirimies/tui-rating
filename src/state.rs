@@ -1,5 +1,7 @@
 //! Rating state management.
 
+use crate::animation::{Animation, Easing};
+
 /// Mutable state for a [`Rating`](crate::Rating) widget.
 ///
 /// The value is expressed in "items" (e.g. stars): `3.5` with a `max` of `5`
@@ -18,10 +20,17 @@
 /// assert_eq!(state.value(), 3.5);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RatingState {
     value: f64,
     max: usize,
     half_steps: bool,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    hover: Option<f64>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    anim: Option<Animation>,
+    #[cfg_attr(feature = "serde", serde(default))]
+    read_only: bool,
 }
 
 impl RatingState {
@@ -33,6 +42,9 @@ impl RatingState {
             value: 0.0,
             max,
             half_steps: false,
+            hover: None,
+            anim: None,
+            read_only: false,
         };
         s.set_value(value);
         s
@@ -43,6 +55,23 @@ impl RatingState {
     pub fn with_half_steps(mut self, enabled: bool) -> Self {
         self.set_half_steps(enabled);
         self
+    }
+
+    /// Builder: mark the state read-only (input handlers become no-ops).
+    #[must_use]
+    pub fn with_read_only(mut self, read_only: bool) -> Self {
+        self.read_only = read_only;
+        self
+    }
+
+    /// Whether input handlers (`handle_key`, `handle_mouse`) are ignored.
+    pub fn is_read_only(&self) -> bool {
+        self.read_only
+    }
+
+    /// Sets the read-only flag.
+    pub fn set_read_only(&mut self, read_only: bool) {
+        self.read_only = read_only;
     }
 
     /// Current value (`0.0..=max`).
@@ -71,6 +100,7 @@ impl RatingState {
 
     /// Sets the value, clamping into range. Non-finite input resets to `0.0`.
     pub fn set_value(&mut self, value: f64) {
+        self.anim = None;
         self.value = if value.is_finite() {
             value.clamp(0.0, self.max as f64)
         } else {
@@ -78,10 +108,79 @@ impl RatingState {
         };
     }
 
+    /// Hover preview value (e.g. from the mouse), shown by
+    /// [`Rating::from_state`](crate::Rating::from_state) without committing.
+    pub fn hover(&self) -> Option<f64> {
+        self.hover
+    }
+
+    /// Sets or clears the hover preview (clamped into range).
+    pub fn set_hover(&mut self, hover: Option<f64>) {
+        self.hover = hover
+            .filter(|h| h.is_finite())
+            .map(|h| h.clamp(0.0, self.max as f64));
+    }
+
+    /// Animates towards `target` over `ticks` ticks with [`Easing::EaseOut`].
+    ///
+    /// The committed [`value`](Self::value) jumps to `target` immediately;
+    /// only [`visual_value`](Self::visual_value) eases. Call
+    /// [`tick`](Self::tick) once per frame/tick.
+    pub fn animate_to(&mut self, target: f64, ticks: u32) {
+        self.animate_to_with(target, ticks, Easing::default());
+    }
+
+    /// Like [`animate_to`](Self::animate_to) with a chosen [`Easing`].
+    pub fn animate_to_with(&mut self, target: f64, ticks: u32, easing: Easing) {
+        let from = self.visual_value();
+        self.set_value(target);
+        self.anim = if ticks == 0 || from == self.value {
+            None
+        } else {
+            Some(Animation::new(from, self.value, ticks, easing))
+        };
+    }
+
+    /// Advances the animation one tick. Returns `true` while animating.
+    pub fn tick(&mut self) -> bool {
+        match self.anim.as_mut() {
+            Some(a) => {
+                if a.tick() {
+                    true
+                } else {
+                    self.anim = None;
+                    false
+                }
+            }
+            None => false,
+        }
+    }
+
+    /// `true` while an animation is running.
+    pub fn is_animating(&self) -> bool {
+        self.anim.is_some()
+    }
+
+    /// The value to draw: the animated value while animating, else
+    /// [`value`](Self::value).
+    pub fn visual_value(&self) -> f64 {
+        self.anim.map_or(self.value, |a| a.value())
+    }
+
+    /// While animating, the 0-based index of the item currently being
+    /// filled (useful for a pulse via
+    /// [`Rating::highlight`](crate::Rating::highlight)).
+    pub fn pulse_index(&self) -> Option<usize> {
+        let v = self.anim?.value();
+        (v > 0.0).then(|| v.ceil() as usize - 1)
+    }
+
     /// Changes the maximum, re-clamping the value.
     pub fn set_max(&mut self, max: usize) {
         self.max = max;
+        self.anim = None;
         self.set_value(self.value);
+        self.set_hover(self.hover);
     }
 
     /// Enables/disables half steps. Disabling snaps the value to a whole number.
@@ -104,11 +203,13 @@ impl RatingState {
 
     /// Sets the value to `0`.
     pub fn clear(&mut self) {
+        self.anim = None;
         self.value = 0.0;
     }
 
     /// Sets the value to `max`.
     pub fn set_full(&mut self) {
+        self.anim = None;
         self.value = self.max as f64;
     }
 
@@ -152,6 +253,70 @@ impl Default for RatingState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hover_clamps_and_clears() {
+        let mut s = RatingState::new(1.0, 5);
+        s.set_hover(Some(9.0));
+        assert_eq!(s.hover(), Some(5.0));
+        s.set_hover(Some(f64::NAN));
+        assert_eq!(s.hover(), None);
+        s.set_hover(Some(2.0));
+        s.set_max(1);
+        assert_eq!(s.hover(), Some(1.0));
+        s.set_hover(None);
+        assert_eq!(s.hover(), None);
+    }
+
+    #[test]
+    fn read_only_flag() {
+        let mut s = RatingState::default().with_read_only(true);
+        assert!(s.is_read_only());
+        s.set_read_only(false);
+        assert!(!s.is_read_only());
+    }
+
+    #[test]
+    fn animation_flow() {
+        let mut s = RatingState::new(0.0, 5);
+        s.animate_to_with(4.0, 4, Easing::Linear);
+        assert_eq!(s.value(), 4.0);
+        assert!(s.is_animating());
+        assert_eq!(s.visual_value(), 0.0);
+        assert_eq!(s.pulse_index(), None);
+        assert!(s.tick());
+        assert_eq!(s.visual_value(), 1.0);
+        assert_eq!(s.pulse_index(), Some(0));
+        s.tick();
+        s.tick();
+        assert!(!s.tick());
+        assert!(!s.is_animating());
+        assert_eq!(s.visual_value(), 4.0);
+        assert!(!s.tick());
+        assert_eq!(s.pulse_index(), None);
+    }
+
+    #[test]
+    fn animation_skips_noop_and_cancels() {
+        let mut s = RatingState::new(3.0, 5);
+        s.animate_to(3.0, 5);
+        assert!(!s.is_animating());
+        s.animate_to(0.0, 0);
+        assert!(!s.is_animating());
+        assert_eq!(s.value(), 0.0);
+        s.animate_to(5.0, 5);
+        s.increment();
+        assert!(!s.is_animating());
+        s.animate_to(1.0, 3);
+        s.clear();
+        assert!(!s.is_animating());
+        s.animate_to(1.0, 3);
+        s.set_full();
+        assert!(!s.is_animating());
+        s.animate_to(1.0, 3);
+        s.set_max(2);
+        assert!(!s.is_animating());
+    }
 
     #[test]
     fn clamps_on_new() {

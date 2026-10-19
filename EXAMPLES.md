@@ -3,6 +3,20 @@
 Run any example with `cargo run --example <name>` or `just example-<name>`.
 Demo GIFs are generated with [VHS](https://github.com/charmbracelet/vhs) via `just vhs-all`.
 
+## gallery
+Every design on auto-cycling pages: presets, symbols, smooth fractional fill, bars, badges, review histogram, vertical, bipolar, disabled/focused and animation. `→`/`Tab` next, `←` previous, `space` pause.
+```bash
+cargo run --release --example gallery
+```
+![gallery](examples/vhs/output/gallery.gif)
+
+## mouse
+Click or drag to rate, hover to preview, `Tab`/`↑↓` move focus, `←/→` `0-9` keys, `r` toggles read-only. Clicks animate the fill. (The GIF shows the keyboard path; VHS cannot record the mouse.)
+```bash
+cargo run --features crossterm --example mouse
+```
+![mouse](examples/vhs/output/mouse.gif)
+
 ## basic
 Static 4/5 rating with label, value text and border.
 ```rust

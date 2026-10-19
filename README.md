@@ -5,24 +5,33 @@
 [![CI](https://github.com/sorinirimies/tui-rating/actions/workflows/ci.yml/badge.svg)](https://github.com/sorinirimies/tui-rating/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A customizable **rating widget** (stars, hearts, circles, …) for [ratatui](https://ratatui.rs) applications, with half-step support, labels, value text, borders and alignment.
+A customizable **rating toolkit** for [ratatui](https://ratatui.rs): stars, hearts, emoji and smooth bars, gradients, review histograms, badges, bipolar scales, mouse + keyboard input and animation.
 
-![tui-rating demo](examples/vhs/output/tui-rating.gif)
+![tui-rating gallery](examples/vhs/output/gallery.gif)
 
 ## ✨ Features
 
-- ⭐ Any number of items (5 stars, 10 squares, …)
-- ½ Half-step ratings (`3.5 / 5`)
-- 🎨 Eleven symbol presets + fully custom glyphs (emoji supported)
-- 🌈 Per-item color gradients (`gradient`, `traffic_light`), bold/dim modifiers
-- 🔢 Value text as fraction, number or percent; label before/after
-- ↔️ Right-to-left fill and a highlighted cursor item
-- 🖌️ Independent styles for filled / half / empty items, label and value
-- 📐 Left / center / right alignment, configurable gap
-- 🔲 Optional `Block` border
+**Designs**
+- ⭐ `Rating`: any number of items, half steps, **smooth fractional fill** (`3.7` → `███▊░`), 16 symbol presets incl. wide emoji (🔥 🍕 🌙 ⭐), vertical layout
+- 📊 `RatingBar`: continuous gauge with block-eighth edges, gradient or colour-by-value
+- 🏷️ `RatingBadge`: `[ 4.2 ★ ]`, filled pill, `★ 4.2/5 (1,203)` with vote counts
+- 🗳️ `RatingHistogram`: Amazon-style review summary (5★→1★ bars, %, counts, average)
+- ↔️ `BipolarRating`: `−n … +n` scales with a centre marker (👎 … 👍, ▼ … ▲)
+- 🎭 `RatingStyle` presets: `classic`, `netflix`, `github`, `imdb`, `neon`, `retro`, `ocean`, `sunset`
+
+**Styling**
+- 🌈 Gradients (`gradient`, `traffic_light`), per-item `color_fn`, bold/dim modifiers
+- 🔢 Value text as fraction / number / percent, label before or after
+- 🖌️ Independent styles for filled / half / empty / label / value, `Block`, alignment, gap
+- 🚫 `disabled` look and a `focused` indicator
 - 🎨 Optional shared theming via the `theme` feature (`tui-nuances`)
-- 🧠 `RatingState` with clamping, increment/decrement, ratios
-- 🛡️ Safe with out-of-range / `NaN` values and zero-size areas
+
+**Interaction**
+- 🖱️ Mouse: `Rating::value_at(area, x, y)` hit-testing, hover preview, click/drag (feature `crossterm`)
+- ⌨️ `RatingState::handle_key`: `←/→` `h/l` `+/-`, `0-9`, `Home`/`End`
+- 🎞️ `animate_to(target, ticks)` with easing and a pulse on the item being filled
+- 🧱 `StatefulWidget` support via `Rating::stateful()`, optional `serde` for `RatingState`
+- 🛡️ Safe with out-of-range / `NaN` values and zero-size areas; ~99% test coverage, property tests
 
 ## 📦 Installation
 
@@ -34,8 +43,14 @@ or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-rating = "0.2"
+tui-rating = "0.3"
 ratatui = "0.30"
+```
+
+Optional features: `theme` (tui-nuances), `crossterm` (key/mouse helpers), `serde`.
+
+```toml
+tui-rating = { version = "0.3", features = ["crossterm", "serde"] }
 ```
 
 ## 🚀 Quick Start
@@ -61,16 +76,23 @@ let rating = Rating::from_state(&state)
 
 | Type | Purpose |
 |------|---------|
-| `Rating` | The widget (builder style, implements `Widget`) |
-| `RatingState` | Value / max / half-step state, input helpers |
-| `RatingSymbols` | Glyph sets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `sparkles`, `hexagons`, `bars`, `dots`, `blocks`, `ascii`, or `new(filled, empty).half(..)` |
-| `ValueFormat` | `Fraction` / `Number` / `Percent` value text |
-| `LabelPosition` | `Before` / `After` the items |
-| `ItemFill` | `Full` / `Half` / `Empty`, returned by `Rating::fill_at` |
+| `Rating` | Item-style widget (builder, implements `Widget`; `.stateful()` for `StatefulWidget`) |
+| `RatingBar` | Continuous gauge-style bar |
+| `RatingBadge` / `BadgeKind` | Compact numeric badge (`Brackets`, `Pill`, `Plain`) with optional votes |
+| `RatingHistogram` | Review-summary histogram |
+| `BipolarRating` | Negative / positive scale |
+| `RatingState` | Value / max / half-step state, hover, animation, key + mouse input |
+| `RatingSymbols` | Glyph sets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `sparkles`, `hexagons`, `bars`, `dots`, `blocks`, `smooth`, `fire`, `pizza`, `moon`, `star_emoji`, `ascii`, or `new(filled, empty).half(..).partials(..)` |
+| `RatingStyle` | Bundled look: symbols + colours + modifiers (`Rating::preset`, `RatingBar::preset`) |
+| `Easing` / `Animation` | Tick-based value animation |
+| `ValueFormat`, `LabelPosition`, `Orientation` | Value text, label placement, layout direction |
+| `ItemFill` | `Full` / `Half` / `Partial(pct)` / `Empty`, from `Rating::fill_at` |
 
 ### `Rating` builder
 
-`new(value, max)` · `from_state(&state)` · `half_steps(bool)` · `symbols(..)` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `show_value` · `value_format` · `value_style` · `label_position` · `gradient` · `traffic_light` · `modifier` · `empty_modifier` · `highlight` · `highlight_style` · `reversed` · `gap` · `alignment` · `block`
+`new(value, max)` · `from_state(&state)` · `half_steps` · `fractional` · `symbols` · `preset` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `label_position` · `show_value` · `value_format` · `value_style` · `gradient` · `traffic_light` · `color_fn` · `modifier` · `empty_modifier` · `highlight` · `highlight_style` · `hover` · `reversed` · `orientation` · `disabled` · `focused` · `focus_style` · `gap` · `alignment` · `block`
+
+Queries: `fill_at` · `display_value` · `value_text` · `width` · `height` · `lines` · `item_at` · `value_at`
 
 ### Styling
 
@@ -90,13 +112,76 @@ Rating::new(4.0, 5)
     .highlight(Some(3)); // cursor / hover preview
 ```
 
-An explicit `filled_color`/`filled_style` foreground wins over the gradient.
+Precedence: `color_fn` > explicit `filled_color`/`filled_style` foreground > gradient. Builder calls after `.preset(..)` override the preset.
 
 ![styles](examples/vhs/output/styles.gif)
 
+### Presets
+
+```rust
+use tui_rating::{Rating, RatingStyle};
+
+let r = Rating::new(4.0, 5).preset(RatingStyle::neon()).show_value(true);
+// RatingStyle::all() lists every preset by name; fields are public, tweak freely
+```
+
+### Smooth fractional fill, bars, badges, histogram, bipolar
+
+```rust
+use tui_rating::*;
+
+// 3.7 of 5 → ███▊░ (needs a symbol set with partial glyphs)
+Rating::new(3.7, 5).symbols(RatingSymbols::smooth()).fractional(true).gap(0);
+
+// continuous gauge, 88% in green
+RatingBar::new(4.4, 5.0).traffic_light().color_by_value(true)
+    .show_value(true).value_format(ValueFormat::Percent);
+
+// [ 4.2 ★ ] (1,203)   |   ★ 4.2/5 (1.2k)
+RatingBadge::new(4.2, 5.0).votes(1203);
+RatingBadge::new(4.2, 5.0).kind(BadgeKind::Plain).show_max(true).votes(1203).compact_votes(true);
+
+// counts[0] = 1★ … counts[4] = 5★
+RatingHistogram::new([42, 51, 120, 610, 1480]).summary(true).traffic_light();
+
+// ○ ● ┃ ○ ○   (-1 of ±2)
+BipolarRating::new(-1.0, 2).show_value(true);
+```
+
+### Vertical, disabled, focused
+
+```rust
+use tui_rating::{Orientation, Rating};
+
+Rating::new(3.0, 5).orientation(Orientation::Vertical); // fills bottom-up
+Rating::new(3.0, 5).focused(true);   // [★ ★ ★ ☆ ☆]
+Rating::new(3.0, 5).disabled(true);  // dimmed, no gradient/highlight
+```
+
+### Mouse, keyboard and animation (`crossterm` feature)
+
+```rust
+use ratatui::layout::Rect;
+use tui_rating::{Rating, RatingState};
+
+let mut state = RatingState::new(3.0, 5);
+let area = Rect::new(0, 0, 20, 1);
+
+// in your event loop:
+// Event::Key(k)   => { state.handle_key(k); }
+// Event::Mouse(m) => { state.handle_mouse(m, &Rating::from_state(&state), area); }
+//
+// hover preview + animated fill come for free through from_state:
+state.animate_to(5.0, 12);   // eased fill-in over 12 ticks
+// each frame / tick: state.tick();
+let widget = Rating::from_state(&state); // uses state.visual_value() + hover
+```
+
+Without the feature, use `Rating::value_at(area, x, y)` and `state.set_hover(..)` / `set_value(..)` yourself. Render through `StatefulWidget` with `frame.render_stateful_widget(rating.stateful(), area, &mut state)`.
+
 ### `RatingState`
 
-`new(value, max)` · `with_half_steps` · `value` · `max` · `step` · `set_value` · `set_max` · `increment` · `decrement` · `clear` · `set_full` · `set_items` · `ratio` · `percentage` · `is_empty` · `is_full`
+`new(value, max)` · `with_half_steps` · `with_read_only` · `value` · `max` · `step` · `set_value` · `set_max` · `increment` · `decrement` · `clear` · `set_full` · `set_items` · `ratio` · `percentage` · `is_empty` · `is_full` · `hover/set_hover` · `animate_to(_with)` · `tick` · `is_animating` · `visual_value` · `pulse_index` · `handle_key` · `handle_mouse`
 
 Half items use the symbol set's `half` glyph when present (circles, squares, ascii). Otherwise the empty glyph is drawn in the filled style (outlined star/heart).
 
@@ -105,7 +190,7 @@ Half items use the symbol set's `half` glyph when present (circles, squares, asc
 Optional Cargo feature (off by default, no extra dependency). Enable it:
 
 ```toml
-tui-rating = { version = "0.1", features = ["theme"] }
+tui-rating = { version = "0.3", features = ["theme"] }
 ```
 
 Backward compatible: without a theme the default look is unchanged.
@@ -133,6 +218,8 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 
 | Example | Description |
 |---------|-------------|
+| `gallery` | **Every design** on auto-cycling pages (presets, symbols, smooth, bars, badges, histogram, vertical, bipolar, animation) |
+| `mouse` | Click / drag / hover to rate, keyboard, read-only toggle, animation (needs `--features crossterm`) |
 | `basic` | Static rating in a bordered block |
 | `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme (needs `--features theme`) |
 | `half_stars` | Half-step ratings, toggle with `t` |
@@ -140,6 +227,8 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 | `styles` | Gradients, percent value, label position, reversed, highlight |
 | `custom` | Emoji, RGB colors, gaps, 10-item scale |
 | `alignment` | Left / center / right |
+
+![mouse example](examples/vhs/output/mouse.gif)
 
 Demo GIFs live in `examples/vhs/output/` (see [EXAMPLES.md](EXAMPLES.md)).
 
@@ -151,10 +240,12 @@ Requires [`just`](https://github.com/casey/just) and [`nu`](https://www.nushell.
 
 ```bash
 just check-all     # fmt + clippy + tests + script tests
-just test          # cargo test
+just test          # cargo test --all-features
+just test-coverage # llvm-cov HTML report
+just bench         # criterion benchmarks
 just test-scripts  # nushell script tests
 just vhs-all       # regenerate demo GIFs (needs vhs)
-just bump 0.2.0    # bump version, changelog, tag
+just bump 0.3.0    # bump version, changelog, tag
 ```
 
 All automation lives in [`scripts/`](scripts/) and is written in Nushell. CI runs on both GitHub Actions (`.github/workflows`) and Gitea Actions (`.gitea/workflows`). Changelogs are generated with [git-cliff](https://git-cliff.org).

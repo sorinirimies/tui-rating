@@ -26,16 +26,24 @@ exclude = [
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
 tui-nuances = { version = "0.1.6", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
 default = []
 # Shared theming via tui-nuances (`Rating::theme`, `Themed`, `Theme`).
 theme = ["dep:tui-nuances"]
+# `RatingState::handle_key` / `handle_mouse` for crossterm events.
+crossterm = ["ratatui/crossterm"]
+# Serialize / deserialize `RatingState` and the small enums.
+serde = ["dep:serde"]
 
 [dev-dependencies]
 anyhow = "1.0"
 crossterm = "0.29"
 ratatui = { version = "0.30", features = ["crossterm"] }
+criterion = { version = "0.5", default-features = false }
+proptest = "1"
+serde_json = "1"
 
 [[example]]
 name = "basic"
@@ -73,3 +81,16 @@ strip = true
 [[example]]
 name = "styles"
 path = "examples/styles.rs"
+
+[[bench]]
+name = "render"
+harness = false
+
+[[example]]
+name = "gallery"
+path = "examples/gallery.rs"
+
+[[example]]
+name = "mouse"
+path = "examples/mouse.rs"
+required-features = ["crossterm"]

@@ -59,6 +59,14 @@ example-half-stars:
 example-symbols:
     cargo run --example symbols
 
+# Run the gallery (every design, auto-cycling)
+example-gallery:
+    cargo run --release --example gallery
+
+# Run the mouse example (click / hover / keys)
+example-mouse:
+    cargo run --features crossterm --example mouse
+
 # Run styles example
 example-styles:
     cargo run --example styles
@@ -72,7 +80,7 @@ example-alignment:
     cargo run --example alignment
 
 # Run all examples
-examples: example-basic example-interactive example-half-stars example-symbols example-styles example-custom example-alignment
+examples: example-gallery example-mouse example-basic example-interactive example-half-stars example-symbols example-styles example-custom example-alignment
 
 # Run tests
 test:
@@ -85,6 +93,10 @@ test-scripts:
 # Run tests with coverage
 test-coverage:
     cargo llvm-cov --all-features --html --output-dir coverage
+
+# Run the criterion benchmarks
+bench:
+    cargo bench
 
 # Check code without building
 check:
@@ -100,7 +112,7 @@ fmt-check:
 
 # Run clippy linter
 clippy:
-    cargo clippy --all-features -- -D warnings
+    cargo clippy --all-features --all-targets -- -D warnings
 
 # Run all checks (fmt, clippy, test)
 check-all: fmt-check clippy test test-scripts
@@ -500,6 +512,16 @@ vhs-symbols:
     vhs examples/vhs/symbols.tape
     @echo "✅ Demo generated at examples/vhs/output/symbols.gif"
 
+# Run the VHS tape for the gallery demo
+vhs-gallery:
+    vhs examples/vhs/gallery.tape
+    @echo "✅ Demo generated at examples/vhs/output/gallery.gif"
+
+# Run the VHS tape for the mouse demo (keyboard path)
+vhs-mouse:
+    vhs examples/vhs/mouse.tape
+    @echo "✅ Demo generated at examples/vhs/output/mouse.gif"
+
 # Run the VHS tape for the styles demo
 vhs-styles:
     @echo "Running VHS tape for styles..."
@@ -544,5 +566,5 @@ vhs-all:
     nu scripts/generate_all_tapes.nu
 
 # Run all VHS tapes manually
-vhs-all-manual: vhs-basic vhs-interactive vhs-half-stars vhs-symbols vhs-styles vhs-custom vhs-alignment
+vhs-all-manual: vhs-basic vhs-interactive vhs-half-stars vhs-symbols vhs-gallery vhs-mouse vhs-styles vhs-custom vhs-alignment
     @echo "✅ All demo GIFs generated!"

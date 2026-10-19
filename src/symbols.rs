@@ -1,5 +1,7 @@
 //! Symbol sets used to draw rating items.
 
+use crate::util::{cell_width, eighths};
+
 /// The glyphs used for filled, half-filled and empty rating items.
 ///
 /// If `half` is `None`, half items are drawn with the `empty` glyph using the
@@ -23,6 +25,9 @@ pub struct RatingSymbols {
     pub half: Option<String>,
     /// Glyph for an empty item.
     pub empty: String,
+    /// Partial-fill glyphs, thinnest first, used by
+    /// [`Rating::fractional`](crate::Rating::fractional).
+    pub partials: Vec<String>,
 }
 
 impl RatingSymbols {
@@ -32,7 +37,32 @@ impl RatingSymbols {
             filled: filled.into(),
             half: None,
             empty: empty.into(),
+            partials: Vec::new(),
         }
+    }
+
+    /// Builder: set partial-fill glyphs (thinnest first) for smooth
+    /// fractional ratings.
+    #[must_use]
+    pub fn partials<I, S>(mut self, partials: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.partials = partials.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Width in terminal cells of the widest glyph; items are padded to it.
+    pub fn cell_width(&self) -> usize {
+        let mut w = cell_width(&self.filled).max(cell_width(&self.empty));
+        if let Some(h) = &self.half {
+            w = w.max(cell_width(h));
+        }
+        for p in &self.partials {
+            w = w.max(cell_width(p));
+        }
+        w
     }
 
     /// Builder: set the half glyph.
@@ -92,6 +122,33 @@ impl RatingSymbols {
         Self::new("█", "░").half("▓")
     }
 
+    /// `█` with block-eighth partials over `░`: smooth, continuous fill.
+    ///
+    /// Use with [`Rating::fractional`](crate::Rating::fractional).
+    pub fn smooth() -> Self {
+        Self::new("█", "░").partials(eighths())
+    }
+
+    /// `🔥` / `・` (wide emoji)
+    pub fn fire() -> Self {
+        Self::new("🔥", "・")
+    }
+
+    /// `🍕` / `・` (wide emoji)
+    pub fn pizza() -> Self {
+        Self::new("🍕", "・")
+    }
+
+    /// `🌙` / `・` (wide emoji)
+    pub fn moon() -> Self {
+        Self::new("🌙", "・")
+    }
+
+    /// `⭐` / `・` (wide emoji)
+    pub fn star_emoji() -> Self {
+        Self::new("⭐", "・")
+    }
+
     /// `*` / `-` / `+` (plain ASCII)
     pub fn ascii() -> Self {
         Self::new("*", "-").half("+")
@@ -126,12 +183,29 @@ mod tests {
             RatingSymbols::bars(),
             RatingSymbols::dots(),
             RatingSymbols::blocks(),
+            RatingSymbols::smooth(),
+            RatingSymbols::fire(),
+            RatingSymbols::pizza(),
+            RatingSymbols::moon(),
+            RatingSymbols::star_emoji(),
             RatingSymbols::ascii(),
         ] {
             assert!(!s.filled.is_empty());
             assert!(!s.empty.is_empty());
             assert_ne!(s.filled, s.empty);
         }
+    }
+
+    #[test]
+    fn cell_width_is_widest() {
+        assert_eq!(RatingSymbols::stars().cell_width(), 1);
+        assert_eq!(RatingSymbols::fire().cell_width(), 2);
+        assert_eq!(RatingSymbols::new("a", "b").half("🔥").cell_width(), 2);
+        assert_eq!(
+            RatingSymbols::new("a", "b").partials(["🔥"]).cell_width(),
+            2
+        );
+        assert_eq!(RatingSymbols::smooth().partials.len(), 7);
     }
 
     #[test]

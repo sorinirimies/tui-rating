@@ -8,6 +8,8 @@ cargo run --example interactive
 
 | Example | Description |
 |---------|-------------|
+| `gallery.rs` | Every design, auto-cycling pages |
+| `mouse.rs` | Mouse + keyboard + animation (`--features crossterm`) |
 | `basic.rs` | Static rating |
 | `interactive.rs` | Editable ratings with different symbols |
 | `half_stars.rs` | Half-step ratings |
