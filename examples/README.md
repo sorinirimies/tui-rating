@@ -12,6 +12,7 @@ cargo run --example interactive
 | `interactive.rs` | Editable ratings with different symbols |
 | `half_stars.rs` | Half-step ratings |
 | `symbols.rs` | All symbol presets |
+| `styles.rs` | Gradients, value formats, label position, highlight |
 | `custom.rs` | Custom glyphs, RGB colors, gaps |
 | `alignment.rs` | Left / center / right |
 

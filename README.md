@@ -13,7 +13,10 @@ A customizable **rating widget** (stars, hearts, circles, …) for [ratatui](htt
 
 - ⭐ Any number of items (5 stars, 10 squares, …)
 - ½ Half-step ratings (`3.5 / 5`)
-- 🎨 Six symbol presets + fully custom glyphs (emoji supported)
+- 🎨 Eleven symbol presets + fully custom glyphs (emoji supported)
+- 🌈 Per-item color gradients (`gradient`, `traffic_light`), bold/dim modifiers
+- 🔢 Value text as fraction, number or percent; label before/after
+- ↔️ Right-to-left fill and a highlighted cursor item
 - 🖌️ Independent styles for filled / half / empty items, label and value
 - 📐 Left / center / right alignment, configurable gap
 - 🔲 Optional `Block` border
@@ -31,7 +34,7 @@ or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-rating = "0.1"
+tui-rating = "0.2"
 ratatui = "0.30"
 ```
 
@@ -60,12 +63,36 @@ let rating = Rating::from_state(&state)
 |------|---------|
 | `Rating` | The widget (builder style, implements `Widget`) |
 | `RatingState` | Value / max / half-step state, input helpers |
-| `RatingSymbols` | Glyph sets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `ascii`, or `new(filled, empty).half(..)` |
+| `RatingSymbols` | Glyph sets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `sparkles`, `hexagons`, `bars`, `dots`, `blocks`, `ascii`, or `new(filled, empty).half(..)` |
+| `ValueFormat` | `Fraction` / `Number` / `Percent` value text |
+| `LabelPosition` | `Before` / `After` the items |
 | `ItemFill` | `Full` / `Half` / `Empty`, returned by `Rating::fill_at` |
 
 ### `Rating` builder
 
-`new(value, max)` · `from_state(&state)` · `half_steps(bool)` · `symbols(..)` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `show_value` · `value_style` · `gap` · `alignment` · `block`
+`new(value, max)` · `from_state(&state)` · `half_steps(bool)` · `symbols(..)` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `show_value` · `value_format` · `value_style` · `label_position` · `gradient` · `traffic_light` · `modifier` · `empty_modifier` · `highlight` · `highlight_style` · `reversed` · `gap` · `alignment` · `block`
+
+### Styling
+
+```rust
+use ratatui::style::{Color, Modifier};
+use tui_rating::{LabelPosition, Rating, RatingSymbols, ValueFormat};
+
+Rating::new(4.0, 5)
+    .symbols(RatingSymbols::hearts())
+    .gradient([Color::Rgb(255, 80, 120), Color::Rgb(120, 80, 255)])
+    .modifier(Modifier::BOLD)
+    .empty_modifier(Modifier::DIM)
+    .value_format(ValueFormat::Percent)
+    .show_value(true)
+    .label("Score")
+    .label_position(LabelPosition::After)
+    .highlight(Some(3)); // cursor / hover preview
+```
+
+An explicit `filled_color`/`filled_style` foreground wins over the gradient.
+
+![styles](examples/vhs/output/styles.gif)
 
 ### `RatingState`
 
@@ -110,8 +137,11 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 | `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme (needs `--features theme`) |
 | `half_stars` | Half-step ratings, toggle with `t` |
 | `symbols` | All symbol presets |
+| `styles` | Gradients, percent value, label position, reversed, highlight |
 | `custom` | Emoji, RGB colors, gaps, 10-item scale |
 | `alignment` | Left / center / right |
+
+Demo GIFs live in `examples/vhs/output/` (see [EXAMPLES.md](EXAMPLES.md)).
 
 Common controls: `←/→` (or `h/l`) change value, `↑/↓` select, `0-9` set, `c` clear, `q`/`Esc` quit. See [EXAMPLES.md](EXAMPLES.md).
 

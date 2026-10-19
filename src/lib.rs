@@ -27,7 +27,7 @@ mod rating;
 mod state;
 mod symbols;
 
-pub use rating::{ItemFill, Rating};
+pub use rating::{ItemFill, LabelPosition, Rating, ValueFormat};
 pub use state::RatingState;
 pub use symbols::RatingSymbols;
 #[cfg(feature = "theme")]

@@ -69,3 +69,7 @@ opt-level = 1
 lto = true
 codegen-units = 1
 strip = true
+
+[[example]]
+name = "styles"
+path = "examples/styles.rs"

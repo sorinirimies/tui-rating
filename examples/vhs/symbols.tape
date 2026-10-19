@@ -4,7 +4,7 @@
 Output "examples/vhs/output/symbols.gif"
 Set Theme "Aardvark Blue"
 Set Width 1200
-Set Height 700
+Set Height 600
 Set FontSize 22
 Set Padding 20
 Set PlaybackSpeed 1

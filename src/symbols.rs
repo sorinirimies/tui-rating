@@ -67,6 +67,31 @@ impl RatingSymbols {
         Self::new("◆", "◇")
     }
 
+    /// `✦` / `✧`
+    pub fn sparkles() -> Self {
+        Self::new("✦", "✧")
+    }
+
+    /// `⬢` / `⬡`
+    pub fn hexagons() -> Self {
+        Self::new("⬢", "⬡")
+    }
+
+    /// `▰` / `▱` (segmented bar)
+    pub fn bars() -> Self {
+        Self::new("▰", "▱")
+    }
+
+    /// `•` / `·`
+    pub fn dots() -> Self {
+        Self::new("•", "·")
+    }
+
+    /// `█` / `▒` / `░` (block shades, half = `▓`)
+    pub fn blocks() -> Self {
+        Self::new("█", "░").half("▓")
+    }
+
     /// `*` / `-` / `+` (plain ASCII)
     pub fn ascii() -> Self {
         Self::new("*", "-").half("+")
@@ -96,6 +121,11 @@ mod tests {
             RatingSymbols::circles(),
             RatingSymbols::squares(),
             RatingSymbols::diamonds(),
+            RatingSymbols::sparkles(),
+            RatingSymbols::hexagons(),
+            RatingSymbols::bars(),
+            RatingSymbols::dots(),
+            RatingSymbols::blocks(),
             RatingSymbols::ascii(),
         ] {
             assert!(!s.filled.is_empty());

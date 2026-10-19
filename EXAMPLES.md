@@ -30,6 +30,13 @@ All presets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `ascii`.
 
 ![symbols](examples/vhs/output/symbols.gif)
 
+## styles
+Gradients, percent value, label after, reversed fill, cursor highlight and dim empties.
+```rust
+Rating::new(4.0, 5).traffic_light().show_value(true);
+```
+![styles](examples/vhs/output/styles.gif)
+
 ## custom
 Custom glyphs (`RatingSymbols::new("▰", "▱")`), RGB colors, gaps and a 10-item scale.
 

@@ -3,7 +3,7 @@
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Widget},
 };
@@ -22,6 +22,28 @@ pub enum ItemFill {
     Half,
     /// Empty.
     Empty,
+}
+
+/// How the value text is formatted when [`Rating::show_value`] is on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ValueFormat {
+    /// `3/5` or `3.5/5` (default).
+    #[default]
+    Fraction,
+    /// `3` or `3.5`.
+    Number,
+    /// `60%`.
+    Percent,
+}
+
+/// Where the label is placed relative to the items.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LabelPosition {
+    /// Before the items (default).
+    #[default]
+    Before,
+    /// After the items (and value text).
+    After,
 }
 
 /// A star-style rating widget (stars, hearts, circles, …).
@@ -58,6 +80,14 @@ pub struct Rating<'a> {
     #[cfg(feature = "theme")]
     themed: Option<ThemeStyles>,
     show_value: bool,
+    value_format: ValueFormat,
+    label_position: LabelPosition,
+    gradient: Vec<Color>,
+    modifier: Modifier,
+    empty_modifier: Modifier,
+    highlight: Option<usize>,
+    highlight_style: Style,
+    reversed: bool,
     gap: u16,
     alignment: Alignment,
     block: Option<Block<'a>>,
@@ -110,6 +140,14 @@ impl<'a> Rating<'a> {
             #[cfg(feature = "theme")]
             themed: None,
             show_value: false,
+            value_format: ValueFormat::Fraction,
+            label_position: LabelPosition::Before,
+            gradient: Vec::new(),
+            modifier: Modifier::empty(),
+            empty_modifier: Modifier::empty(),
+            highlight: None,
+            highlight_style: Style::default().add_modifier(Modifier::REVERSED | Modifier::BOLD),
+            reversed: false,
             gap: 1,
             alignment: Alignment::Left,
             block: None,
@@ -200,6 +238,74 @@ impl<'a> Rating<'a> {
         self
     }
 
+    /// Sets the value text format (default [`ValueFormat::Fraction`]).
+    #[must_use]
+    pub fn value_format(mut self, format: ValueFormat) -> Self {
+        self.value_format = format;
+        self
+    }
+
+    /// Places the label before (default) or after the items.
+    #[must_use]
+    pub fn label_position(mut self, position: LabelPosition) -> Self {
+        self.label_position = position;
+        self
+    }
+
+    /// Colors filled items by position, interpolating between the given
+    /// colors (RGB colors blend smoothly, others step). Overrides the filled
+    /// foreground. An empty list disables the gradient.
+    #[must_use]
+    pub fn gradient(mut self, colors: impl Into<Vec<Color>>) -> Self {
+        self.gradient = colors.into();
+        self
+    }
+
+    /// Classic traffic-light gradient: red → yellow → green.
+    #[must_use]
+    pub fn traffic_light(self) -> Self {
+        self.gradient([
+            Color::Rgb(220, 60, 60),
+            Color::Rgb(240, 200, 50),
+            Color::Rgb(70, 190, 90),
+        ])
+    }
+
+    /// Adds text modifiers (e.g. `Modifier::BOLD`) to filled and half items.
+    #[must_use]
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
+        self.modifier = modifier;
+        self
+    }
+
+    /// Adds text modifiers (e.g. `Modifier::DIM`) to empty items.
+    #[must_use]
+    pub fn empty_modifier(mut self, modifier: Modifier) -> Self {
+        self.empty_modifier = modifier;
+        self
+    }
+
+    /// Highlights the item at `index` (0-based), e.g. a hover/cursor preview.
+    #[must_use]
+    pub fn highlight(mut self, index: Option<usize>) -> Self {
+        self.highlight = index;
+        self
+    }
+
+    /// Style patched onto the highlighted item (default reversed + bold).
+    #[must_use]
+    pub fn highlight_style(mut self, style: Style) -> Self {
+        self.highlight_style = style;
+        self
+    }
+
+    /// Fills right-to-left instead of left-to-right.
+    #[must_use]
+    pub fn reversed(mut self, reversed: bool) -> Self {
+        self.reversed = reversed;
+        self
+    }
+
     /// Sets the number of spaces between items (default `1`).
     #[must_use]
     pub fn gap(mut self, gap: u16) -> Self {
@@ -261,14 +367,53 @@ impl<'a> Rating<'a> {
         }
     }
 
-    /// The `"3.5/5"`-style value text.
+    /// The value text (`"3.5/5"`, `"3.5"` or `"70%"`, per [`ValueFormat`]).
     pub fn value_text(&self) -> String {
         let v = self.display_value();
-        if v.fract() == 0.0 {
-            format!("{}/{}", v as i64, self.max)
+        let num = if v.fract() == 0.0 {
+            format!("{}", v as i64)
         } else {
-            format!("{:.1}/{}", v, self.max)
+            format!("{v:.1}")
+        };
+        match self.value_format {
+            ValueFormat::Fraction => format!("{num}/{}", self.max),
+            ValueFormat::Number => num,
+            ValueFormat::Percent => {
+                let pct = if self.max == 0 {
+                    0.0
+                } else {
+                    v / self.max as f64 * 100.0
+                };
+                format!("{}%", pct.round() as i64)
+            }
         }
+    }
+
+    fn gradient_color(&self, index: usize) -> Option<Color> {
+        let n = self.gradient.len();
+        if n == 0 {
+            return None;
+        }
+        if n == 1 || self.max <= 1 {
+            return Some(self.gradient[0]);
+        }
+        let pos = index as f64 / (self.max - 1) as f64 * (n - 1) as f64;
+        let lo = (pos.floor() as usize).min(n - 1);
+        let hi = (lo + 1).min(n - 1);
+        let t = pos - lo as f64;
+        Some(match (self.gradient[lo], self.gradient[hi]) {
+            (Color::Rgb(r1, g1, b1), Color::Rgb(r2, g2, b2)) => {
+                let m = |a: u8, b: u8| (a as f64 + (b as f64 - a as f64) * t).round() as u8;
+                Color::Rgb(m(r1, r2), m(g1, g2), m(b1, b2))
+            }
+            (a, b) => {
+                if t < 0.5 {
+                    a
+                } else {
+                    b
+                }
+            }
+        })
     }
 
     /// Fill of the `index`-th item (0-based).
@@ -287,15 +432,22 @@ impl<'a> Rating<'a> {
     pub fn line(&self) -> Line<'a> {
         let (filled_style, empty_style, label_style, value_style) = self.resolved();
         let mut spans: Vec<Span<'a>> = Vec::new();
-        if let Some(label) = &self.label {
+        if let (Some(label), LabelPosition::Before) = (&self.label, self.label_position) {
             spans.push(Span::styled(format!("{label} "), label_style));
         }
         let gap = " ".repeat(self.gap as usize);
-        for i in 0..self.max {
-            if i > 0 && self.gap > 0 {
+        for pos in 0..self.max {
+            if pos > 0 && self.gap > 0 {
                 spans.push(Span::raw(gap.clone()));
             }
-            let (glyph, style) = match self.fill_at(i) {
+            // Logical index: which item this slot represents.
+            let i = if self.reversed {
+                self.max - 1 - pos
+            } else {
+                pos
+            };
+            let fill = self.fill_at(i);
+            let (glyph, mut style) = match fill {
                 ItemFill::Full => (&self.symbols.filled, filled_style),
                 ItemFill::Half => match &self.symbols.half {
                     Some(h) => (h, self.half_style.unwrap_or(filled_style)),
@@ -303,10 +455,26 @@ impl<'a> Rating<'a> {
                 },
                 ItemFill::Empty => (&self.symbols.empty, empty_style),
             };
+            if fill != ItemFill::Empty {
+                if let (Some(c), None) =
+                    (self.gradient_color(i), self.filled_style.and_then(|s| s.fg))
+                {
+                    style = style.fg(c);
+                }
+                style = style.add_modifier(self.modifier);
+            } else {
+                style = style.add_modifier(self.empty_modifier);
+            }
+            if self.highlight == Some(i) {
+                style = style.patch(self.highlight_style);
+            }
             spans.push(Span::styled(glyph.clone(), style));
         }
         if self.show_value {
             spans.push(Span::styled(format!(" {}", self.value_text()), value_style));
+        }
+        if let (Some(label), LabelPosition::After) = (&self.label, self.label_position) {
+            spans.push(Span::styled(format!(" {label}"), label_style));
         }
         Line::from(spans).alignment(self.alignment)
     }
@@ -454,6 +622,113 @@ mod tests {
     fn width_counts_cells() {
         assert_eq!(Rating::new(0.0, 5).width(), 9);
         assert_eq!(Rating::new(0.0, 5).gap(2).width(), 13);
+    }
+
+    fn cell_fg(r: Rating<'_>, x: u16) -> Color {
+        let area = Rect::new(0, 0, 30, 1);
+        let mut buf = Buffer::empty(area);
+        r.render(area, &mut buf);
+        buf[(x, 0)].fg
+    }
+
+    #[test]
+    fn value_formats() {
+        let r = Rating::new(3.0, 5);
+        assert_eq!(
+            r.clone().value_format(ValueFormat::Number).value_text(),
+            "3"
+        );
+        assert_eq!(
+            r.clone().value_format(ValueFormat::Percent).value_text(),
+            "60%"
+        );
+        let h = Rating::new(3.5, 5).half_steps(true);
+        assert_eq!(
+            h.clone().value_format(ValueFormat::Number).value_text(),
+            "3.5"
+        );
+        assert_eq!(h.value_format(ValueFormat::Percent).value_text(), "70%");
+        assert_eq!(
+            Rating::new(0.0, 0)
+                .value_format(ValueFormat::Percent)
+                .value_text(),
+            "0%"
+        );
+    }
+
+    #[test]
+    fn label_after() {
+        let r = Rating::new(1.0, 2)
+            .gap(0)
+            .label("Hi")
+            .label_position(LabelPosition::After);
+        assert_eq!(text(r, 6), "★☆ Hi ");
+    }
+
+    #[test]
+    fn label_after_with_value() {
+        let r = Rating::new(1.0, 2)
+            .gap(0)
+            .show_value(true)
+            .label("Hi")
+            .label_position(LabelPosition::After);
+        assert_eq!(text(r, 10), "★☆ 1/2 Hi ");
+    }
+
+    #[test]
+    fn reversed_fills_from_right() {
+        let r = Rating::new(2.0, 4).gap(0).reversed(true);
+        assert_eq!(text(r, 4), "☆☆★★");
+    }
+
+    #[test]
+    fn gradient_interpolates_rgb() {
+        let r = Rating::new(3.0, 3)
+            .gap(0)
+            .gradient([Color::Rgb(0, 0, 0), Color::Rgb(100, 200, 50)]);
+        assert_eq!(cell_fg(r.clone(), 0), Color::Rgb(0, 0, 0));
+        assert_eq!(cell_fg(r.clone(), 1), Color::Rgb(50, 100, 25));
+        assert_eq!(cell_fg(r, 2), Color::Rgb(100, 200, 50));
+    }
+
+    #[test]
+    fn gradient_steps_named_and_single() {
+        let r = Rating::new(2.0, 2)
+            .gap(0)
+            .gradient([Color::Red, Color::Green]);
+        assert_eq!(cell_fg(r, 0), Color::Red);
+        let r = Rating::new(2.0, 2).gap(0).gradient([Color::Blue]);
+        assert_eq!(cell_fg(r, 1), Color::Blue);
+        let r = Rating::new(1.0, 1).gap(0).traffic_light();
+        assert_ne!(cell_fg(r, 0), Color::Reset);
+    }
+
+    #[test]
+    fn gradient_skips_empty_and_explicit_fill_wins() {
+        let r = Rating::new(1.0, 2).gap(0).gradient([Color::Red]);
+        assert_eq!(cell_fg(r, 1), Color::DarkGray);
+        let r = Rating::new(1.0, 2)
+            .gap(0)
+            .filled_color(Color::Cyan)
+            .gradient([Color::Red]);
+        assert_eq!(cell_fg(r, 0), Color::Cyan);
+    }
+
+    #[test]
+    fn modifiers_and_highlight() {
+        let area = Rect::new(0, 0, 4, 1);
+        let mut buf = Buffer::empty(area);
+        Rating::new(1.0, 2)
+            .gap(0)
+            .modifier(Modifier::BOLD)
+            .empty_modifier(Modifier::DIM)
+            .highlight(Some(1))
+            .highlight_style(Style::default().add_modifier(Modifier::UNDERLINED))
+            .render(area, &mut buf);
+        assert!(buf[(0, 0)].modifier.contains(Modifier::BOLD));
+        assert!(buf[(1, 0)].modifier.contains(Modifier::DIM));
+        assert!(buf[(1, 0)].modifier.contains(Modifier::UNDERLINED));
+        assert!(!buf[(0, 0)].modifier.contains(Modifier::UNDERLINED));
     }
 
     #[test]

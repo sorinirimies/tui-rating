@@ -59,6 +59,10 @@ example-half-stars:
 example-symbols:
     cargo run --example symbols
 
+# Run styles example
+example-styles:
+    cargo run --example styles
+
 # Run custom example
 example-custom:
     cargo run --example custom
@@ -68,7 +72,7 @@ example-alignment:
     cargo run --example alignment
 
 # Run all examples
-examples: example-basic example-interactive example-half-stars example-symbols example-custom example-alignment
+examples: example-basic example-interactive example-half-stars example-symbols example-styles example-custom example-alignment
 
 # Run tests
 test:
@@ -423,6 +427,12 @@ vhs-symbols:
     vhs examples/vhs/symbols.tape
     @echo "✅ Demo generated at examples/vhs/output/symbols.gif"
 
+# Run the VHS tape for the styles demo
+vhs-styles:
+    @echo "Running VHS tape for styles..."
+    vhs examples/vhs/styles.tape
+    @echo "✅ Demo generated at examples/vhs/output/styles.gif"
+
 # Run the VHS tape for the custom demo
 vhs-custom:
     @echo "Running VHS tape for custom..."
@@ -441,5 +451,5 @@ vhs-all:
     nu scripts/generate_all_tapes.nu
 
 # Run all VHS tapes manually
-vhs-all-manual: vhs-basic vhs-interactive vhs-half-stars vhs-symbols vhs-custom vhs-alignment
+vhs-all-manual: vhs-basic vhs-interactive vhs-half-stars vhs-symbols vhs-styles vhs-custom vhs-alignment
     @echo "✅ All demo GIFs generated!"
