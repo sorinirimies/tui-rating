@@ -156,6 +156,11 @@ impl Themed for Rating<'_> {
     }
 }
 
+/// Saturating `usize` → `u16`.
+fn to_u16(n: usize) -> u16 {
+    u16::try_from(n).unwrap_or(u16::MAX)
+}
+
 /// One laid-out row of the widget.
 struct Row<'a> {
     line: Line<'a>,
@@ -651,7 +656,7 @@ impl<'a> Rating<'a> {
             label_style = label_style.add_modifier(Modifier::DIM);
             value_style = value_style.add_modifier(Modifier::DIM);
         }
-        let iw = self.symbols.cell_width() as u16;
+        let iw = to_u16(self.symbols.cell_width());
         let focus = self.focused;
         let label_before = match (&self.label, self.label_position) {
             (Some(l), LabelPosition::Before) => Some(format!("{l} ")),
@@ -668,21 +673,21 @@ impl<'a> Rating<'a> {
                 let mut x: u16 = 0;
                 if focus {
                     spans.push(Span::styled("[", self.focus_style));
-                    x += 1;
+                    x = x.saturating_add(1);
                 }
                 if let Some(l) = label_before {
-                    x += cell_width(&l) as u16;
+                    x = x.saturating_add(to_u16(cell_width(&l)));
                     spans.push(Span::styled(l, label_style));
                 }
                 for pos in 0..self.max {
                     if pos > 0 && self.gap > 0 {
                         spans.push(Span::raw(" ".repeat(self.gap as usize)));
-                        x += self.gap;
+                        x = x.saturating_add(self.gap);
                     }
                     let i = self.logical(pos);
                     let (glyph, style) = self.item(i, (filled_style, empty_style));
                     items.push((i, x, iw));
-                    x += iw;
+                    x = x.saturating_add(iw);
                     spans.push(Span::styled(glyph, style));
                 }
                 if self.show_value {
@@ -800,7 +805,7 @@ impl<'a> Rating<'a> {
         }
         let rows = self.rows();
         let row = rows.get(rel as usize)?;
-        let start = align_x(inner, row.line.width() as u16, self.alignment);
+        let start = align_x(inner, to_u16(row.line.width()), self.alignment);
         row.items.iter().find_map(|&(i, off, w)| {
             let a = start.checked_add(off)?;
             let b = a.checked_add(w)?;
@@ -1127,6 +1132,22 @@ mod tests {
         (0..h)
             .map(|y| (0..w).map(|x| buf[(x, y)].symbol().to_string()).collect())
             .collect()
+    }
+
+    #[test]
+    fn huge_inputs_do_not_overflow() {
+        // regression: fuzz found u16 overflow in the layout offsets
+        let long = "x".repeat(70_000);
+        let r = Rating::new(1.0, 40).label(long).gap(u16::MAX).focused(true);
+        let area = Rect::new(0, 0, 10, 2);
+        let mut buf = Buffer::empty(area);
+        r.clone().render(area, &mut buf);
+        assert_eq!(r.item_at(area, 3, 0), None);
+        let v = Rating::new(1.0, 3)
+            .orientation(Orientation::Vertical)
+            .gap(u16::MAX);
+        let mut buf = Buffer::empty(area);
+        v.render(area, &mut buf);
     }
 
     #[test]

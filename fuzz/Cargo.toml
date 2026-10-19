@@ -39,3 +39,9 @@ name = "text_inputs"
 path = "fuzz_targets/text_inputs.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "render_widgets"
+path = "fuzz_targets/render_widgets.rs"
+test = false
+doc = false
