@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-10-19
+
+### Features
+- Add gradients, value formats, label position, highlight, reversed fill and 5 symbol presets
+
+### Miscellaneous
+- Skip unconfigured remotes in *-all recipes
+- Push/pull current branch instead of hardcoded main
+- Align git/release/vhs recipes with pi-tokenburn
+
+### Ci
+- Install Rust toolchain via action (rustup missing on runner)
+
 ## [0.2.0] - 2026-10-14
 
 ### Bug Fixes
@@ -18,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Depend on tui-nuances 0.1.5
 - Depend on tui-nuances 0.1.6
 - Depend on tui-nuances 0.1.6 from crates.io
+- Bump version to 0.2.0
 
 ### Ci
 - Prebuilt Nushell, cargo-deny + cargo-audit security workflow; fuzzing; tui-nuances 0.1.4
