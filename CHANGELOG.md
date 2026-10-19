@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-10-19
+
+### Features
+- Smooth fill, emoji, bars, badges, histogram, bipolar, presets, mouse/keys, animation
+
 ## [0.2.1] - 2026-10-19
 
 ### Features
@@ -10,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Skip unconfigured remotes in *-all recipes
 - Push/pull current branch instead of hardcoded main
 - Align git/release/vhs recipes with pi-tokenburn
+- Bump version to 0.2.1
 
 ### Ci
 - Install Rust toolchain via action (rustup missing on runner)
