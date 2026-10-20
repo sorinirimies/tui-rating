@@ -31,6 +31,22 @@ pub struct RatingState {
     anim: Option<Animation>,
     #[cfg_attr(feature = "serde", serde(default))]
     read_only: bool,
+    #[cfg_attr(feature = "serde", serde(default))]
+    click_to_clear: bool,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    prev: Option<f64>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub(crate) digit: Option<u8>,
+}
+
+/// A committed value change, as returned by `RatingState::handle_key_change`
+/// (feature `crossterm`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Change {
+    /// Value before the input.
+    pub old: f64,
+    /// Value after the input.
+    pub new: f64,
 }
 
 impl RatingState {
@@ -45,6 +61,9 @@ impl RatingState {
             hover: None,
             anim: None,
             read_only: false,
+            click_to_clear: false,
+            prev: None,
+            digit: None,
         };
         s.set_value(value);
         s
@@ -62,6 +81,45 @@ impl RatingState {
     pub fn with_read_only(mut self, read_only: bool) -> Self {
         self.read_only = read_only;
         self
+    }
+
+    /// Builder: clicking the item that is already the value clears the
+    /// rating (the "click again to reset" behaviour of most web widgets).
+    #[must_use]
+    pub fn with_click_to_clear(mut self, enabled: bool) -> Self {
+        self.click_to_clear = enabled;
+        self
+    }
+
+    /// Whether clicking the current value clears it.
+    pub fn click_to_clear(&self) -> bool {
+        self.click_to_clear
+    }
+
+    /// Reverts to the value before the last change. Calling it again redoes
+    /// the change (a single-level undo/redo toggle). Returns `true` if the
+    /// value changed.
+    pub fn undo(&mut self) -> bool {
+        match self.prev {
+            Some(p) if (p - self.value).abs() > f64::EPSILON => {
+                self.prev = Some(self.value);
+                self.anim = None;
+                self.value = p;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// `true` if [`undo`](Self::undo) would change the value.
+    pub fn can_undo(&self) -> bool {
+        self.prev
+            .is_some_and(|p| (p - self.value).abs() > f64::EPSILON)
+    }
+
+    /// Screen-reader friendly text, e.g. `"3.5 out of 5"`.
+    pub fn describe(&self) -> String {
+        crate::util::describe(self.value, self.max)
     }
 
     /// Whether input handlers (`handle_key`, `handle_mouse`) are ignored.
@@ -101,11 +159,19 @@ impl RatingState {
     /// Sets the value, clamping into range. Non-finite input resets to `0.0`.
     pub fn set_value(&mut self, value: f64) {
         self.anim = None;
-        self.value = if value.is_finite() {
+        let new = if value.is_finite() {
             value.clamp(0.0, self.max as f64)
         } else {
             0.0
         };
+        self.commit(new);
+    }
+
+    fn commit(&mut self, new: f64) {
+        if (new - self.value).abs() > f64::EPSILON {
+            self.prev = Some(self.value);
+        }
+        self.value = new;
     }
 
     /// Hover preview value (e.g. from the mouse), shown by
@@ -204,13 +270,13 @@ impl RatingState {
     /// Sets the value to `0`.
     pub fn clear(&mut self) {
         self.anim = None;
-        self.value = 0.0;
+        self.commit(0.0);
     }
 
     /// Sets the value to `max`.
     pub fn set_full(&mut self) {
         self.anim = None;
-        self.value = self.max as f64;
+        self.commit(self.max as f64);
     }
 
     /// Sets the value to the n-th item (1-based), e.g. for number-key input.

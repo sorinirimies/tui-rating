@@ -94,3 +94,8 @@ path = "examples/gallery.rs"
 name = "mouse"
 path = "examples/mouse.rs"
 required-features = ["crossterm"]
+
+[[example]]
+name = "survey"
+path = "examples/survey.rs"
+required-features = ["crossterm"]

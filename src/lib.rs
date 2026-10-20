@@ -26,6 +26,15 @@
 //! - [`RatingBadge`]: `[ 4.2 ★ ]`, pill and vote-count badges
 //! - [`RatingHistogram`]: Amazon-style review summary
 //! - [`BipolarRating`]: `−n … +n` scales (👎 … 👍)
+//! - [`NpsRating`] / [`NpsSummary`]: 0–10 Net Promoter Score selector and aggregate
+//! - [`ThumbsRating`]: up/down votes with a net score ([`ThumbsState`])
+//! - [`LikertScale`]: labelled agreement / satisfaction scales ([`LikertState`])
+//! - [`SentimentFaces`]: 😡 🙁 😐 🙂 😍
+//! - [`RatingRange`]: two-handle score band ([`RangeState`])
+//! - [`MultiCriteria`]: several labelled ratings + overall ([`RatingForm`] state)
+//! - [`RatingTrend`] / [`RatingDelta`]: sparkline and `▲ 0.3` change indicator
+//! - [`RatingSlider`]: continuous slider with numeric entry ([`SliderState`])
+//! - [`RatingCompare`]: two items side by side with the difference
 //!
 //! ## Support types
 //!
@@ -44,23 +53,41 @@ mod animation;
 mod badge;
 mod bar;
 mod bipolar;
+mod compare;
+mod faces;
 mod histogram;
 #[cfg(feature = "crossterm")]
 mod input;
+mod likert;
+mod multi;
+mod nps;
 mod preset;
+mod range;
 mod rating;
+mod slider;
 mod state;
 mod symbols;
+mod thumbs;
+mod trend;
 mod util;
 
 pub use animation::{Animation, Easing};
 pub use badge::{BadgeKind, RatingBadge};
 pub use bar::RatingBar;
 pub use bipolar::BipolarRating;
+pub use compare::RatingCompare;
+pub use faces::SentimentFaces;
 pub use histogram::RatingHistogram;
+pub use likert::{LikertLabels, LikertScale, LikertState};
+pub use multi::{MultiCriteria, RatingForm};
+pub use nps::{NpsCategory, NpsRating, NpsSummary, NpsSummaryWidget};
 pub use preset::RatingStyle;
+pub use range::{Handle, RangeState, RatingRange};
 pub use rating::{ItemFill, LabelPosition, Orientation, Rating, StatefulRating, ValueFormat};
-pub use state::RatingState;
+pub use slider::{RatingSlider, SliderState};
+pub use state::{Change, RatingState};
 pub use symbols::RatingSymbols;
+pub use thumbs::{ThumbsRating, ThumbsState, Vote};
+pub use trend::{RatingDelta, RatingTrend};
 #[cfg(feature = "theme")]
 pub use tui_nuances::{Status, Theme, ThemeProvider, ThemeSwitcher, Themed};

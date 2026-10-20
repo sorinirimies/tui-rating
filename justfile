@@ -63,6 +63,10 @@ example-symbols:
 example-gallery:
     cargo run --release --example gallery
 
+# Run the survey example (NPS, Likert, faces, range, slider, thumbs)
+example-survey:
+    cargo run --features crossterm --example survey
+
 # Run the mouse example (click / hover / keys)
 example-mouse:
     cargo run --features crossterm --example mouse
@@ -80,7 +84,7 @@ example-alignment:
     cargo run --example alignment
 
 # Run all examples
-examples: example-gallery example-mouse example-basic example-interactive example-half-stars example-symbols example-styles example-custom example-alignment
+examples: example-gallery example-mouse example-survey example-basic example-interactive example-half-stars example-symbols example-styles example-custom example-alignment
 
 # Run tests
 test:
@@ -516,6 +520,11 @@ vhs-symbols:
 vhs-gallery:
     vhs examples/vhs/gallery.tape
     @echo "✅ Demo generated at examples/vhs/output/gallery.gif"
+
+# Run the VHS tape for the survey demo
+vhs-survey:
+    vhs examples/vhs/survey.tape
+    @echo "✅ Demo generated at examples/vhs/output/survey.gif"
 
 # Run the VHS tape for the mouse demo (keyboard path)
 vhs-mouse:

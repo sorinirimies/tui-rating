@@ -11,20 +11,11 @@ Set PlaybackSpeed 1
 Hide
 Type "clear && cargo run --release --example gallery"
 Enter
-Sleep 6s
+Sleep 5s
 Show
 
-Sleep 2.5s
-Right
-Sleep 2.5s
-Right
-Sleep 3s
-Right
-Sleep 3s
-Right
-# pause auto-advance so the animation page can play out
-Type " "
-Sleep 6s
+# pages auto-advance (2.6s each, animation page 4.2s) and every value moves
+Sleep 20.5s
 
 Hide
 Type "q"

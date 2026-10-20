@@ -1,6 +1,12 @@
 //! Internal helpers shared by the widgets.
 
-use ratatui::{layout::Alignment, layout::Rect, style::Color, text::Span};
+use ratatui::{
+    buffer::Buffer,
+    layout::{Alignment, Rect},
+    style::Color,
+    text::{Line, Span},
+    widgets::{Block, Widget},
+};
 
 use crate::ValueFormat;
 
@@ -10,6 +16,29 @@ pub(crate) fn eighths() -> Vec<String> {
         .iter()
         .map(|s| (*s).to_string())
         .collect()
+}
+
+/// Renders `lines` (one per row) into `area`, inside an optional block.
+pub(crate) fn render_lines(
+    block: Option<Block<'_>>,
+    lines: Vec<Line<'_>>,
+    area: Rect,
+    buf: &mut Buffer,
+) {
+    let inner = match block {
+        Some(b) => {
+            let inner = b.inner(area);
+            b.render(area, buf);
+            inner
+        }
+        None => area,
+    };
+    if inner.width == 0 || inner.height == 0 {
+        return;
+    }
+    for (i, line) in lines.into_iter().enumerate().take(inner.height as usize) {
+        line.render(Rect::new(inner.x, inner.y + i as u16, inner.width, 1), buf);
+    }
 }
 
 /// Cell width of a string.
@@ -104,6 +133,11 @@ pub(crate) fn format_value(v: f64, max: usize, format: ValueFormat) -> String {
             format!("{}%", pct.round() as i64)
         }
     }
+}
+
+/// `"3.5 out of 5"`.
+pub(crate) fn describe(v: f64, max: usize) -> String {
+    format!("{} out of {max}", number_text(v))
 }
 
 /// `1203` → `"1,203"`.

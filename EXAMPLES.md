@@ -10,6 +10,14 @@ cargo run --release --example gallery
 ```
 ![gallery](examples/vhs/output/gallery.gif)
 
+## survey
+Keyboard feedback form: criteria (`RatingForm`), NPS, Likert, faces, score band, slider with typed value (`Enter`), thumbs. `[` `]` switch section.
+```bash
+cargo run --features crossterm --example survey
+```
+
+![survey](examples/vhs/output/survey.gif)
+
 ## mouse
 Click or drag to rate, hover to preview, `Tab`/`↑↓` move focus, `←/→` `0-9` keys, `r` toggles read-only. Clicks animate the fill. (The GIF shows the keyboard path; VHS cannot record the mouse.)
 ```bash

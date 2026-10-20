@@ -9,23 +9,47 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
-    text::Line,
+    text::{Line, Span},
     widgets::{Block, Paragraph},
     Frame,
 };
 use tui_rating::{
-    BadgeKind, BipolarRating, LabelPosition, Orientation, Rating, RatingBadge, RatingBar,
-    RatingHistogram, RatingState, RatingStyle, RatingSymbols, ValueFormat,
+    BadgeKind, BipolarRating, LabelPosition, LikertLabels, LikertScale, MultiCriteria, NpsRating,
+    NpsSummary, Orientation, RangeState, Rating, RatingBadge, RatingBar, RatingCompare,
+    RatingDelta, RatingHistogram, RatingRange, RatingSlider, RatingState, RatingStyle,
+    RatingSymbols, RatingTrend, SentimentFaces, SliderState, ThumbsRating, ThumbsState,
+    ValueFormat, Vote,
 };
 
-const PAGES: [&str; 5] = [
+const PAGES: [&str; 7] = [
     "Presets",
     "Symbols",
     "Smooth · bars · badges",
     "Reviews · vertical · bipolar",
+    "Surveys · NPS · Likert · faces",
+    "Range · slider · trends · compare",
     "Animation",
 ];
-const PAGE_TICKS: u32 = 45; // 4.5 s at 100 ms
+const PAGE_TICKS: u32 = 26; // 2.6 s at 100 ms
+const LAST: usize = 6;
+const ANIM_PAGE_TICKS: u32 = 42;
+
+/// Triangle wave 0..=1 with period `period` ticks, shifted by `offset` ticks.
+fn wave(ticks: u32, period: u32, offset: u32) -> f64 {
+    let p = f64::from((ticks + offset) % period) / f64::from(period);
+    if p < 0.5 {
+        p * 2.0
+    } else {
+        2.0 - p * 2.0
+    }
+}
+
+/// Sweep a value over `0..=max` (eased), quantised to `step`.
+fn sweep(ticks: u32, period: u32, offset: u32, max: f64, step: f64) -> f64 {
+    let w = wave(ticks, period, offset);
+    let eased = w * w * (3.0 - 2.0 * w);
+    ((eased * max) / step).round() * step
+}
 
 struct App {
     page: usize,
@@ -60,20 +84,25 @@ impl App {
 
     fn tick(&mut self) {
         self.ticks += 1;
-        if self.page == 4 {
+        if self.page == LAST {
             let t = self.ticks;
             for (i, s) in self.anim.iter_mut().enumerate() {
                 let i32_ = i as u32;
-                if t == 5 + i32_ * 6 {
-                    s.animate_to(self.targets[i], 18);
+                if t == 2 + i32_ * 4 {
+                    s.animate_to(self.targets[i], 16);
                 }
-                if t == 32 + i32_ * 2 {
-                    s.animate_to(if i == 2 { 3.0 } else { 1.0 }, 12);
+                if t == 26 + i32_ * 2 {
+                    s.animate_to(if i == 2 { 3.0 } else { 1.0 }, 10);
                 }
                 s.tick();
             }
         }
-        if !self.paused && self.ticks >= PAGE_TICKS {
+        let len = if self.page == LAST {
+            ANIM_PAGE_TICKS
+        } else {
+            PAGE_TICKS
+        };
+        if !self.paused && self.ticks >= len {
             self.goto(self.page + 1);
         }
     }
@@ -140,10 +169,12 @@ fn draw(f: &mut Frame, app: &App) {
     let inner = block.inner(body);
     f.render_widget(block, body);
     match app.page {
-        0 => presets(f, inner),
-        1 => symbols(f, inner),
-        2 => smooth_bars_badges(f, inner),
-        3 => reviews(f, inner),
+        0 => presets(f, inner, app.ticks),
+        1 => symbols(f, inner, app.ticks),
+        2 => smooth_bars_badges(f, inner, app.ticks),
+        3 => reviews(f, inner, app.ticks),
+        4 => surveys(f, inner, app.ticks),
+        5 => analytics(f, inner, app.ticks),
         _ => animation(f, inner, app),
     }
 }
@@ -160,14 +191,14 @@ fn named(f: &mut Frame, area: Rect, name: &str, widget: Rating<'_>) {
     f.render_widget(widget, r);
 }
 
-fn presets(f: &mut Frame, area: Rect) {
+fn presets(f: &mut Frame, area: Rect, t: u32) {
     let all = RatingStyle::all();
-    for (row, (name, style)) in rows(area, all.len()).into_iter().zip(all) {
+    for (i, (row, (name, style))) in rows(area, all.len()).into_iter().zip(all).enumerate() {
         named(
             f,
             row,
             name,
-            Rating::new(3.5, 5)
+            Rating::new(sweep(t, 24, i as u32 * 3, 5.0, 0.5), 5)
                 .half_steps(true)
                 .preset(style)
                 .show_value(true),
@@ -175,7 +206,7 @@ fn presets(f: &mut Frame, area: Rect) {
     }
 }
 
-fn symbols(f: &mut Frame, area: Rect) {
+fn symbols(f: &mut Frame, area: Rect, t: u32) {
     let sets = [
         ("stars", RatingSymbols::stars(), Color::Yellow),
         ("hearts", RatingSymbols::hearts(), Color::Red),
@@ -193,8 +224,12 @@ fn symbols(f: &mut Frame, area: Rect) {
         ("moon", RatingSymbols::moon(), Color::Reset),
         ("star_emoji", RatingSymbols::star_emoji(), Color::Reset),
     ];
-    for (row, (name, symbols, color)) in rows(area, sets.len()).into_iter().zip(sets) {
-        let mut r = Rating::new(3.5, 5).half_steps(true).symbols(symbols);
+    for (i, (row, (name, symbols, color))) in
+        rows(area, sets.len()).into_iter().zip(sets).enumerate()
+    {
+        let mut r = Rating::new(sweep(t, 24, i as u32 * 2, 5.0, 0.5), 5)
+            .half_steps(true)
+            .symbols(symbols);
         if color != Color::Reset {
             r = r.filled_color(color);
         }
@@ -202,13 +237,14 @@ fn symbols(f: &mut Frame, area: Rect) {
     }
 }
 
-fn smooth_bars_badges(f: &mut Frame, area: Rect) {
+fn smooth_bars_badges(f: &mut Frame, area: Rect, t: u32) {
     let r = rows(area, 17);
     f.render_widget(
         Paragraph::new(" Smooth fractional fill").add_modifier(Modifier::BOLD),
         r[0],
     );
-    for (i, v) in [2.6, 5.3, 7.4, 9.8].into_iter().enumerate() {
+    for i in 0..4 {
+        let v = sweep(t, 28, i as u32 * 5, 10.0, 0.1);
         named(
             f,
             r[1 + i],
@@ -223,14 +259,14 @@ fn smooth_bars_badges(f: &mut Frame, area: Rect) {
     }
     f.render_widget(Paragraph::new(" Bars").add_modifier(Modifier::BOLD), r[6]);
     f.render_widget(
-        RatingBar::new(3.7, 5.0)
+        RatingBar::new(sweep(t, 26, 0, 5.0, 0.05), 5.0)
             .traffic_light()
             .label("gradient")
             .show_value(true),
         r[7],
     );
     f.render_widget(
-        RatingBar::new(4.4, 5.0)
+        RatingBar::new(sweep(t, 26, 6, 5.0, 0.05), 5.0)
             .traffic_light()
             .color_by_value(true)
             .label("by value")
@@ -239,14 +275,14 @@ fn smooth_bars_badges(f: &mut Frame, area: Rect) {
         r[8],
     );
     f.render_widget(
-        RatingBar::new(2.0, 5.0)
+        RatingBar::new(sweep(t, 26, 12, 5.0, 0.05), 5.0)
             .preset(RatingStyle::neon())
             .label("neon    ")
             .show_value(true),
         r[9],
     );
     f.render_widget(
-        RatingBar::new(2.0, 5.0)
+        RatingBar::new(sweep(t, 26, 18, 5.0, 0.05), 5.0)
             .glyphs("▰", "▱")
             .partials(Vec::<String>::new())
             .filled_color(Color::Cyan)
@@ -293,14 +329,21 @@ fn smooth_bars_badges(f: &mut Frame, area: Rect) {
     );
 }
 
-fn reviews(f: &mut Frame, area: Rect) {
+fn reviews(f: &mut Frame, area: Rect, t: u32) {
+    let w = |p, o| wave(t, p, o);
     let [left, right] =
         Layout::horizontal([Constraint::Percentage(55), Constraint::Percentage(45)]).areas(area);
     f.render_widget(
-        RatingHistogram::new([42, 51, 120, 610, 1480])
-            .summary(true)
-            .traffic_light()
-            .block(Block::bordered().title(" Customer reviews ")),
+        RatingHistogram::new([
+            (40.0 + 30.0 * w(20, 0)) as u64,
+            (50.0 + 40.0 * w(24, 4)) as u64,
+            (120.0 + 200.0 * w(28, 8)) as u64,
+            (610.0 + 300.0 * w(30, 2)) as u64,
+            (1480.0 * (0.4 + 0.6 * w(26, 10))) as u64,
+        ])
+        .summary(true)
+        .traffic_light()
+        .block(Block::bordered().title(" Customer reviews ")),
         left,
     );
     let [top, bottom] = Layout::vertical([Constraint::Length(8), Constraint::Min(1)]).areas(right);
@@ -314,23 +357,56 @@ fn reviews(f: &mut Frame, area: Rect) {
             .alignment(Alignment::Center)
             .show_value(true)
     };
-    f.render_widget(v(3.0, RatingSymbols::stars(), Color::Yellow), v1);
-    f.render_widget(v(4.0, RatingSymbols::circles(), Color::Green), v2);
     f.render_widget(
-        v(2.0, RatingSymbols::hexagons(), Color::Cyan).reversed(true),
+        v(
+            sweep(t, 20, 0, 5.0, 1.0),
+            RatingSymbols::stars(),
+            Color::Yellow,
+        ),
+        v1,
+    );
+    f.render_widget(
+        v(
+            sweep(t, 20, 6, 5.0, 1.0),
+            RatingSymbols::circles(),
+            Color::Green,
+        ),
+        v2,
+    );
+    f.render_widget(
+        v(
+            sweep(t, 20, 12, 5.0, 1.0),
+            RatingSymbols::hexagons(),
+            Color::Cyan,
+        )
+        .reversed(true),
         v3,
     );
     let b = rows(bottom, 6);
     f.render_widget(
-        BipolarRating::new(-2.0, 2).label("mood").show_value(true),
+        BipolarRating::new(sweep(t, 20, 0, 4.0, 1.0) - 2.0, 2)
+            .label("mood")
+            .show_value(true),
         b[0],
     );
     f.render_widget(
-        BipolarRating::new(1.0, 2).label("mood").show_value(true),
+        BipolarRating::new(sweep(t, 20, 7, 4.0, 1.0) - 2.0, 2)
+            .label("mood")
+            .show_value(true),
         b[1],
     );
-    f.render_widget(BipolarRating::new(2.0, 2).thumbs().show_value(true), b[2]);
-    f.render_widget(BipolarRating::new(-1.0, 3).arrows().show_value(true), b[3]);
+    f.render_widget(
+        BipolarRating::new(sweep(t, 20, 14, 4.0, 1.0) - 2.0, 2)
+            .thumbs()
+            .show_value(true),
+        b[2],
+    );
+    f.render_widget(
+        BipolarRating::new(sweep(t, 24, 4, 6.0, 1.0) - 3.0, 3)
+            .arrows()
+            .show_value(true),
+        b[3],
+    );
     f.render_widget(
         Rating::new(2.0, 4)
             .focused(true)
@@ -380,5 +456,123 @@ fn animation(f: &mut Frame, area: Rect, app: &App) {
         Paragraph::new(" RatingState::animate_to(target, ticks) + tick()")
             .style(Style::default().fg(Color::DarkGray)),
         r[6],
+    );
+}
+
+fn heading(f: &mut Frame, area: Rect, text: &str) {
+    f.render_widget(
+        Paragraph::new(format!(" {text}")).add_modifier(Modifier::BOLD),
+        area,
+    );
+}
+
+fn surveys(f: &mut Frame, area: Rect, t: u32) {
+    let r = rows(area, 18);
+    let pick = |p, o, n: usize| (sweep(t, p, o, n as f64, 1.0) as usize).min(n);
+
+    heading(f, r[0], "NpsRating · NpsSummary");
+    let score = pick(22, 0, 10) as u8;
+    f.render_widget(NpsRating::new(Some(score)).show_category(true), r[1]);
+    let w = wave(t, 30, 0);
+    f.render_widget(
+        NpsSummary::new((120.0 - 60.0 * w) as u64, 210, (300.0 + 400.0 * w) as u64).widget(),
+        r[2],
+    );
+
+    heading(f, r[4], "LikertScale");
+    f.render_widget(LikertScale::agreement(Some(pick(18, 0, 4))), r[5]);
+    f.render_widget(
+        LikertScale::satisfaction(Some(pick(18, 6, 4))).labels(LikertLabels::Selected),
+        r[6],
+    );
+
+    heading(f, r[8], "SentimentFaces");
+    f.render_widget(
+        SentimentFaces::new(Some(pick(20, 0, 4))).show_label(true),
+        r[9],
+    );
+    f.render_widget(
+        SentimentFaces::ascii(Some(pick(20, 8, 4))).show_label(true),
+        r[10],
+    );
+
+    heading(f, r[12], "ThumbsRating · ThumbsState");
+    let mut st = ThumbsState::new(1203, 48);
+    match (t / 6) % 3 {
+        1 => st.vote(Vote::Up),
+        2 => st.vote(Vote::Down),
+        _ => {}
+    }
+    f.render_widget(
+        ThumbsRating::from_state(&st)
+            .compact(true)
+            .show_net(true)
+            .show_ratio(true),
+        r[13],
+    );
+    f.render_widget(
+        Paragraph::new(" vote cycles: none → 👍 → 👎 (counts follow)")
+            .style(Style::default().fg(Color::DarkGray)),
+        r[14],
+    );
+}
+
+fn analytics(f: &mut Frame, area: Rect, t: u32) {
+    let r = rows(area, 19);
+
+    heading(f, r[0], "RatingRange · RatingSlider");
+    let mut range = RangeState::new(0.0, 5.0, 0.0, 5.0).with_step(0.5);
+    range.move_active(sweep(t, 26, 0, 2.5, 0.5));
+    range.toggle();
+    range.move_active(-sweep(t, 26, 8, 2.5, 0.5));
+    f.render_widget(RatingRange::from_state(&range), r[1]);
+    let mut slider = SliderState::new(0.0, 5.0, 0.1);
+    slider.set_value(sweep(t, 26, 0, 5.0, 0.1));
+    f.render_widget(RatingSlider::from_state(&slider), r[2]);
+
+    heading(f, r[4], "MultiCriteria");
+    let v = |p, o| sweep(t, p, o, 5.0, 0.5);
+    f.render_widget(
+        MultiCriteria::new(
+            [
+                ("Service", v(24, 0)),
+                ("Quality", v(24, 6)),
+                ("Value", v(24, 12)),
+            ],
+            5,
+        )
+        .overall(true)
+        .focus(Some(((t / 8) % 3) as usize))
+        .preset(RatingStyle::imdb()),
+        Rect { height: 4, ..r[5] },
+    );
+
+    heading(f, r[10], "RatingTrend · RatingDelta");
+    let series: Vec<f64> = (0..16)
+        .map(|i| 3.4 + 1.2 * wave(i * 3 + t.min(12) / 4, 20, 0) + f64::from(i) * 0.02)
+        .collect();
+    f.render_widget(
+        RatingTrend::new(series).range(2.0, 5.0).show_latest(true),
+        r[11],
+    );
+    let (a, b) = (3.9, 3.9 + 1.0 * wave(t, 26, 0) - 0.5);
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::raw(" 30-day change  "),
+            RatingDelta::between(a, b).span(),
+            Span::raw("   "),
+            RatingDelta::between(a, b).percent(true).span(),
+        ])),
+        r[12],
+    );
+
+    heading(f, r[14], "RatingCompare");
+    f.render_widget(
+        RatingCompare::new(
+            ("v1.0", 3.1 + 0.5 * wave(t, 26, 0)),
+            ("v2.0", 3.6 + 1.2 * wave(t, 26, 9)),
+            5.0,
+        ),
+        Rect { height: 3, ..r[15] },
     );
 }

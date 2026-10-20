@@ -9,6 +9,7 @@ cargo run --example interactive
 | Example | Description |
 |---------|-------------|
 | `gallery.rs` | Every design, auto-cycling pages |
+| `survey.rs` | Keyboard survey form: criteria, NPS, Likert, faces, range, slider, thumbs (`--features crossterm`) |
 | `mouse.rs` | Mouse + keyboard + animation (`--features crossterm`) |
 | `basic.rs` | Static rating |
 | `interactive.rs` | Editable ratings with different symbols |

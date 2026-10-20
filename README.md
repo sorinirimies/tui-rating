@@ -17,6 +17,15 @@ A customizable **rating toolkit** for [ratatui](https://ratatui.rs): stars, hear
 - 🏷️ `RatingBadge`: `[ 4.2 ★ ]`, filled pill, `★ 4.2/5 (1,203)` with vote counts
 - 🗳️ `RatingHistogram`: Amazon-style review summary (5★→1★ bars, %, counts, average)
 - ↔️ `BipolarRating`: `−n … +n` scales with a centre marker (👎 … 👍, ▼ … ▲)
+- 📣 `NpsRating` / `NpsSummary`: 0–10 selector with detractor/passive/promoter colours and the aggregate NPS
+- 👍 `ThumbsRating` + `ThumbsState`: up/down votes, net score, switch/withdraw logic
+- 📋 `LikertScale` + `LikertState`: agreement / satisfaction / frequency scales with labels
+- 😍 `SentimentFaces`: 😡 🙁 😐 🙂 😍 (or ASCII `>:( :( :| :) :D`)
+- 🎚️ `RatingRange` + `RangeState`: two-handle score band
+- 🧮 `MultiCriteria` + `RatingForm`: service / quality / value rows with focus, keys and an overall average
+- 📈 `RatingTrend` / `RatingDelta`: sparkline and `▲ 0.3` / `▼ 7%` change indicators
+- 🕹️ `RatingSlider` + `SliderState`: continuous slider with click/drag and typed exact values
+- ⚖️ `RatingCompare`: two items as bars with the difference and a winner
 - 🎭 `RatingStyle` presets: `classic`, `netflix`, `github`, `imdb`, `neon`, `retro`, `ocean`, `sunset`
 
 **Styling**
@@ -27,8 +36,9 @@ A customizable **rating toolkit** for [ratatui](https://ratatui.rs): stars, hear
 - 🎨 Optional shared theming via the `theme` feature (`tui-nuances`)
 
 **Interaction**
-- 🖱️ Mouse: `Rating::value_at(area, x, y)` hit-testing, hover preview, click/drag (feature `crossterm`)
-- ⌨️ `RatingState::handle_key`: `←/→` `h/l` `+/-`, `0-9`, `Home`/`End`
+- 🖱️ Mouse: `Rating::value_at(area, x, y)` hit-testing, hover preview, click/drag, scroll wheel, optional click-to-clear (feature `crossterm`)
+- ⌨️ `RatingState::handle_key`: `←/→` `h/l` `+/-`, `0-9` (multi-digit: `1` `0` → 10), `Home`/`End`, `Backspace` clear, `u` undo; `handle_key_change` returns `Change { old, new }`
+- ♿ `Rating::monochrome` (no-colour / high-contrast) and `Rating::description` / `RatingState::describe` ("3.5 out of 5")
 - 🎞️ `animate_to(target, ticks)` with easing and a pulse on the item being filled
 - 🧱 `StatefulWidget` support via `Rating::stateful()`, optional `serde` for `RatingState`
 - 🛡️ Safe with out-of-range / `NaN` values and zero-size areas; ~99% test coverage, property tests
@@ -81,6 +91,15 @@ let rating = Rating::from_state(&state)
 | `RatingBadge` / `BadgeKind` | Compact numeric badge (`Brackets`, `Pill`, `Plain`) with optional votes |
 | `RatingHistogram` | Review-summary histogram |
 | `BipolarRating` | Negative / positive scale |
+| `NpsRating` / `NpsSummary` / `NpsCategory` | 0–10 selector, aggregate Net Promoter Score |
+| `ThumbsRating` / `ThumbsState` / `Vote` | Up/down votes |
+| `LikertScale` / `LikertState` / `LikertLabels` | Labelled agreement scales |
+| `SentimentFaces` | Emoji / ASCII face scale |
+| `RatingRange` / `RangeState` / `Handle` | Two-handle range |
+| `MultiCriteria` / `RatingForm` | Multi-row rating form + overall |
+| `RatingTrend` / `RatingDelta` | Sparkline, change indicator |
+| `RatingSlider` / `SliderState` | Continuous slider with numeric entry |
+| `RatingCompare` | Side-by-side comparison |
 | `RatingState` | Value / max / half-step state, hover, animation, key + mouse input |
 | `RatingSymbols` | Glyph sets: `stars`, `hearts`, `circles`, `squares`, `diamonds`, `sparkles`, `hexagons`, `bars`, `dots`, `blocks`, `smooth`, `fire`, `pizza`, `moon`, `star_emoji`, `ascii`, or `new(filled, empty).half(..).partials(..)` |
 | `RatingStyle` | Bundled look: symbols + colours + modifiers (`Rating::preset`, `RatingBar::preset`) |
@@ -90,9 +109,9 @@ let rating = Rating::from_state(&state)
 
 ### `Rating` builder
 
-`new(value, max)` · `from_state(&state)` · `half_steps` · `fractional` · `symbols` · `preset` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `label_position` · `show_value` · `value_format` · `value_style` · `gradient` · `traffic_light` · `color_fn` · `modifier` · `empty_modifier` · `highlight` · `highlight_style` · `hover` · `reversed` · `orientation` · `disabled` · `focused` · `focus_style` · `gap` · `alignment` · `block`
+`new(value, max)` · `from_state(&state)` · `half_steps` · `fractional` · `symbols` · `preset` · `filled_style/filled_color` · `half_style` · `empty_style/empty_color` · `label` · `label_style` · `label_position` · `show_value` · `value_format` · `value_style` · `gradient` · `traffic_light` · `color_fn` · `modifier` · `empty_modifier` · `highlight` · `highlight_style` · `hover` · `reversed` · `orientation` · `disabled` · `focused` · `focus_style` · `gap` · `alignment` · `monochrome` · `block`
 
-Queries: `fill_at` · `display_value` · `value_text` · `width` · `height` · `lines` · `item_at` · `value_at`
+Queries: `fill_at` · `display_value` · `value_text` · `description` · `width` · `height` · `lines` · `item_at` · `value_at`
 
 ### Styling
 
@@ -123,6 +142,7 @@ use tui_rating::{Rating, RatingStyle};
 
 let r = Rating::new(4.0, 5).preset(RatingStyle::neon()).show_value(true);
 // RatingStyle::all() lists every preset by name; fields are public, tweak freely
+// or build your own: RatingStyle::custom(RatingSymbols::hearts()).filled_color(..).gradient([..]).gap(0)
 ```
 
 ### Smooth fractional fill, bars, badges, histogram, bipolar
@@ -147,6 +167,48 @@ RatingHistogram::new([42, 51, 120, 610, 1480]).summary(true).traffic_light();
 // ○ ● ┃ ○ ○   (-1 of ±2)
 BipolarRating::new(-1.0, 2).show_value(true);
 ```
+
+### Surveys, scales and forms
+
+```rust
+use tui_rating::*;
+
+NpsRating::new(Some(9)).show_category(true);                  // 0 1 … [9] 10  Promoter
+NpsSummary::from_scores([10, 9, 9, 8, 3]).widget();           // NPS +40 ████▒▒░░ (5)
+ThumbsRating::new(1203, 48).compact(true).show_net(true);     // 👍 1.2k  👎 48  +1.2k
+LikertScale::agreement(Some(3));                              // Strongly disagree ○ ○ ○ ● ○ Strongly agree
+SentimentFaces::new(Some(4)).show_label(true);                // 😡 🙁 😐 🙂 [😍]  Great
+RatingRange::new(0.0, 5.0, 1.0, 4.0);                         // 1 ──●━━━━━●─ 4
+RatingTrend::new([3.8, 4.0, 4.1, 4.4]).show_latest(true);     // ▃▅▆█ 4.4 ▲ 0.3
+RatingDelta::between(4.0, 3.5).percent(true);                 // ▼ 12%
+RatingCompare::new(("v1", 3.1), ("v2", 4.2), 5.0);            // two bars + ▲ 1.1 (+35%)
+
+// a keyboard-driven review form
+let mut form = RatingForm::new(["Service", "Quality", "Value"], 5).with_half_steps(true);
+// Event::Key(k) => { form.handle_key(k); }   // ↑↓ focus, ←→ rate, digits, undo …
+// frame.render_widget(MultiCriteria::from_form(&form).overall(true), area);
+let _ = form.average();
+
+// a slider where you can also type an exact value (Enter / e)
+let mut slider = SliderState::new(0.0, 5.0, 0.1);
+slider.begin_entry();
+for c in "4.2".chars() { slider.push_entry(c); }
+slider.commit_entry();
+// frame.render_widget(RatingSlider::from_state(&slider), area);
+```
+
+`ThumbsState`, `LikertState`, `RangeState`, `SliderState` and `RatingForm` all have a `handle_key` (feature `crossterm`) and implement `serde` traits with the `serde` feature.
+
+### Accessibility
+
+```rust
+use tui_rating::Rating;
+
+let r = Rating::new(3.5, 5).half_steps(true).label("Quality").monochrome(true);
+assert_eq!(r.description(), "Quality: 3.5 out of 5"); // for status lines / screen readers
+```
+
+`monochrome(true)` drops every colour and tells filled from empty by glyph and bold/dim only.
 
 ### Vertical, disabled, focused
 
@@ -181,7 +243,7 @@ Without the feature, use `Rating::value_at(area, x, y)` and `state.set_hover(..)
 
 ### `RatingState`
 
-`new(value, max)` · `with_half_steps` · `with_read_only` · `value` · `max` · `step` · `set_value` · `set_max` · `increment` · `decrement` · `clear` · `set_full` · `set_items` · `ratio` · `percentage` · `is_empty` · `is_full` · `hover/set_hover` · `animate_to(_with)` · `tick` · `is_animating` · `visual_value` · `pulse_index` · `handle_key` · `handle_mouse`
+`new(value, max)` · `with_half_steps` · `with_read_only` · `value` · `max` · `step` · `set_value` · `set_max` · `increment` · `decrement` · `clear` · `set_full` · `set_items` · `ratio` · `percentage` · `is_empty` · `is_full` · `with_click_to_clear` · `undo/can_undo` · `describe` · `hover/set_hover` · `animate_to(_with)` · `tick` · `is_animating` · `visual_value` · `pulse_index` · `handle_key` · `handle_key_change` · `handle_mouse`
 
 Half items use the symbol set's `half` glyph when present (circles, squares, ascii). Otherwise the empty glyph is drawn in the filled style (outlined star/heart).
 
@@ -218,7 +280,8 @@ Run with `cargo run --example <name>` (or `just example-<name>`).
 
 | Example | Description |
 |---------|-------------|
-| `gallery` | **Every design** on auto-cycling pages (presets, symbols, smooth, bars, badges, histogram, vertical, bipolar, animation) |
+| `gallery` | **Every design** on auto-cycling, animated pages (presets, symbols, smooth, bars, badges, histogram, vertical, bipolar, surveys, range/slider/trends/compare, animation) |
+| `survey` | Keyboard feedback form: criteria, NPS, Likert, faces, range, slider with typed value, thumbs (needs `--features crossterm`) |
 | `mouse` | Click / drag / hover to rate, keyboard, read-only toggle, animation (needs `--features crossterm`) |
 | `basic` | Static rating in a bordered block |
 | `interactive` | Multiple editable ratings with different symbols; `t`/`T` switch theme (needs `--features theme`) |

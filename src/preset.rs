@@ -62,6 +62,76 @@ impl RatingStyle {
         }
     }
 
+    /// Starts a custom look from `symbols`, then chain the builder methods.
+    ///
+    /// ```
+    /// use ratatui::style::Color;
+    /// use tui_rating::{Rating, RatingStyle, RatingSymbols};
+    ///
+    /// let style = RatingStyle::custom(RatingSymbols::hearts())
+    ///     .filled_color(Color::Rgb(255, 105, 180))
+    ///     .empty_color(Color::Rgb(70, 40, 60))
+    ///     .gradient([Color::Rgb(255, 105, 180), Color::Rgb(255, 0, 80)])
+    ///     .gap(0);
+    /// let _ = Rating::new(3.5, 5).half_steps(true).preset(style);
+    /// ```
+    pub fn custom(symbols: RatingSymbols) -> Self {
+        Self::base(
+            symbols,
+            Style::default().fg(Color::Yellow),
+            Style::default().fg(Color::DarkGray),
+        )
+    }
+
+    /// Foreground colour of filled items.
+    #[must_use]
+    pub fn filled_color(mut self, color: Color) -> Self {
+        self.filled = self.filled.fg(color);
+        self
+    }
+
+    /// Foreground colour of empty items.
+    #[must_use]
+    pub fn empty_color(mut self, color: Color) -> Self {
+        self.empty = self.empty.fg(color);
+        self
+    }
+
+    /// Per-position gradient for filled items.
+    #[must_use]
+    pub fn gradient(mut self, colors: impl Into<Vec<Color>>) -> Self {
+        self.gradient = colors.into();
+        self
+    }
+
+    /// Label style.
+    #[must_use]
+    pub fn label_style(mut self, style: Style) -> Self {
+        self.label = style;
+        self
+    }
+
+    /// Value text style.
+    #[must_use]
+    pub fn value_style(mut self, style: Style) -> Self {
+        self.value = style;
+        self
+    }
+
+    /// Modifiers for filled items.
+    #[must_use]
+    pub fn modifier(mut self, modifier: Modifier) -> Self {
+        self.modifier = modifier;
+        self
+    }
+
+    /// Spaces between items.
+    #[must_use]
+    pub fn gap(mut self, gap: u16) -> Self {
+        self.gap = gap;
+        self
+    }
+
     /// Yellow stars on dark gray (the crate default look).
     pub fn classic() -> Self {
         Self::base(
@@ -174,5 +244,16 @@ mod tests {
             }
         }
         assert_eq!(RatingStyle::default(), RatingStyle::classic());
+        let c = RatingStyle::custom(RatingSymbols::hearts())
+            .filled_color(Color::Red)
+            .empty_color(Color::Blue)
+            .gradient([Color::Red, Color::Blue])
+            .label_style(Style::default())
+            .value_style(Style::default())
+            .modifier(Modifier::BOLD)
+            .gap(0);
+        assert_eq!(c.gap, 0);
+        assert_eq!(c.filled.fg, Some(Color::Red));
+        assert_eq!(c.empty.fg, Some(Color::Blue));
     }
 }

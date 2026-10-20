@@ -124,6 +124,7 @@ pub struct Rating<'a> {
     reversed: bool,
     orientation: Orientation,
     disabled: bool,
+    monochrome: bool,
     focused: bool,
     focus_style: Style,
     gap: u16,
@@ -203,6 +204,7 @@ impl<'a> Rating<'a> {
             reversed: false,
             orientation: Orientation::Horizontal,
             disabled: false,
+            monochrome: false,
             focused: false,
             focus_style: Style::default()
                 .fg(Color::Cyan)
@@ -439,6 +441,25 @@ impl<'a> Rating<'a> {
         self
     }
 
+    /// High-contrast / no-colour mode: drops all colours (including
+    /// gradients and callbacks) and distinguishes filled (bold) from empty
+    /// (dim) items by modifier and glyph only.
+    #[must_use]
+    pub fn monochrome(mut self, monochrome: bool) -> Self {
+        self.monochrome = monochrome;
+        self
+    }
+
+    /// Screen-reader friendly text, e.g. `"3.5 out of 5"` (prefixed with the
+    /// label if set). Handy for status lines / accessibility output.
+    pub fn description(&self) -> String {
+        let d = crate::util::describe(self.display_value(), self.max);
+        match &self.label {
+            Some(l) => format!("{}: {d}", l.trim()),
+            None => d,
+        }
+    }
+
     /// Dims the whole widget and drops gradient, callback colours and
     /// highlight: a read-only / inactive look.
     #[must_use]
@@ -630,6 +651,13 @@ impl<'a> Rating<'a> {
         });
         if self.disabled {
             style = style.add_modifier(Modifier::DIM);
+        }
+        if self.monochrome {
+            style = Style::default().add_modifier(if drawn_filled {
+                Modifier::BOLD
+            } else {
+                Modifier::DIM
+            });
         }
         if self.highlighted() == Some(index) {
             style = style.patch(self.highlight_style);

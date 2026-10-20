@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Features
+- New widgets: `NpsRating` / `NpsSummary`, `ThumbsRating` / `ThumbsState`, `LikertScale` / `LikertState`, `SentimentFaces`, `RatingRange` / `RangeState`, `MultiCriteria` / `RatingForm`, `RatingTrend` / `RatingDelta`, `RatingSlider` / `SliderState` (numeric entry), `RatingCompare`
+- `RatingState`: single-level `undo`, `describe()`, click-to-clear, multi-digit key entry (`1` `0` → 10), `Backspace`/`Delete` clear, `handle_key_change` returning `Change { old, new }`, scroll-wheel in `handle_mouse`
+- `Rating::monochrome` (no-colour / high-contrast mode) and `Rating::description` (screen-reader text)
+- `RatingStyle::custom` builder (`filled_color`, `empty_color`, `gradient`, `gap`, …)
+- `survey` example, two new gallery pages, faster animated gallery GIF
+
 ## [0.3.0] - 2026-10-19
 
 ### Features
