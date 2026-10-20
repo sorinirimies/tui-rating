@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.4.0] - 2026-10-21
 
 ### Features
 - New widgets: `NpsRating` / `NpsSummary`, `ThumbsRating` / `ThumbsState`, `LikertScale` / `LikertState`, `SentimentFaces`, `RatingRange` / `RangeState`, `MultiCriteria` / `RatingForm`, `RatingTrend` / `RatingDelta`, `RatingSlider` / `SliderState` (numeric entry), `RatingCompare`

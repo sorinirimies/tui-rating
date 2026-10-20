@@ -53,14 +53,14 @@ or in `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-rating = "0.3"
+tui-rating = "0.4"
 ratatui = "0.30"
 ```
 
 Optional features: `theme` (tui-nuances), `crossterm` (key/mouse helpers), `serde`.
 
 ```toml
-tui-rating = { version = "0.3", features = ["crossterm", "serde"] }
+tui-rating = { version = "0.4", features = ["crossterm", "serde"] }
 ```
 
 ## 🚀 Quick Start
@@ -252,7 +252,7 @@ Half items use the symbol set's `half` glyph when present (circles, squares, asc
 Optional Cargo feature (off by default, no extra dependency). Enable it:
 
 ```toml
-tui-rating = { version = "0.3", features = ["theme"] }
+tui-rating = { version = "0.4", features = ["theme"] }
 ```
 
 Backward compatible: without a theme the default look is unchanged.
