@@ -107,10 +107,10 @@ jobs:
       # so install the prebuilt binary directly.
       - name: Install Nushell
         run: |
-          url=$(curl -fsSL https://api.github.com/repos/nushell/nushell/releases/latest \
-            | grep -o 'https://[^"]*x86_64-unknown-linux-gnu.tar.gz' | head -1)
-          curl -fsSL "$url" | tar -xz -C /tmp
-          sudo cp /tmp/nu-*/nu /usr/local/bin/nu 2>/dev/null || cp /tmp/nu-*/nu /usr/local/bin/nu
+          V=0.116.1
+          curl -fsSL https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu \
+            || install -D -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu "$HOME/.cargo/bin/nu"
           nu --version
       - name: Install Rust stable (rustfmt, clippy)
         uses: dtolnay/rust-toolchain@stable
