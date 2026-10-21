@@ -1,19 +1,36 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] - 2026-10-21
+## [0.4.1] - 2026-10-21
+
+### Miscellaneous
+- Update Cargo.lock
+
+### Ci
+- Allow SliderState in template-leftover check
+
+## [0.4.0] - 2026-10-20
+
+### Bug Fixes
+- Saturate u16 layout offsets (found by fuzzing); add render_widgets fuzz target
 
 ### Features
-- New widgets: `NpsRating` / `NpsSummary`, `ThumbsRating` / `ThumbsState`, `LikertScale` / `LikertState`, `SentimentFaces`, `RatingRange` / `RangeState`, `MultiCriteria` / `RatingForm`, `RatingTrend` / `RatingDelta`, `RatingSlider` / `SliderState` (numeric entry), `RatingCompare`
-- `RatingState`: single-level `undo`, `describe()`, click-to-clear, multi-digit key entry (`1` `0` → 10), `Backspace`/`Delete` clear, `handle_key_change` returning `Change { old, new }`, scroll-wheel in `handle_mouse`
-- `Rating::monochrome` (no-colour / high-contrast mode) and `Rating::description` (screen-reader text)
-- `RatingStyle::custom` builder (`filled_color`, `empty_color`, `gradient`, `gap`, …)
-- `survey` example, two new gallery pages, faster animated gallery GIF
+- Add NPS, thumbs, Likert, faces, range, form, trend, slider, compare widgets
+
+### Miscellaneous
+- Bump version to 0.4.0
+
+### Ci
+- Nightly update pushes to main directly like tui-spinner (no manual-merge PR)
+- Install pinned Nushell from github.com release URL (runner can't resolve api.github.com)
 
 ## [0.3.0] - 2026-10-19
 
 ### Features
 - Smooth fill, emoji, bars, badges, histogram, bipolar, presets, mouse/keys, animation
+
+### Miscellaneous
+- Bump version to 0.3.0
 
 ## [0.2.1] - 2026-10-19
 
