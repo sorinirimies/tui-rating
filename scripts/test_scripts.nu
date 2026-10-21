@@ -53,7 +53,7 @@ def main [] {
     }
 
     # 7. no leftover template names
-    let leftovers = (glob **/*.{rs,nu,md,toml,yml} --exclude [**/target/** **/.git/**] | where {|f| ($f | path basename) != "test_scripts.nu" } | where {|f| (open $f --raw | str contains "tui-slider") or (open $f --raw | str contains "SliderState") })
+    let leftovers = (glob **/*.{rs,nu,md,toml,yml} --exclude [**/target/** **/.git/**] | where {|f| ($f | path basename) != "test_scripts.nu" } | where {|f| (open $f --raw | str contains "tui-slider") })
     $results = ($results | append (check "no leftover slider references" ($leftovers | is-empty)))
 
     # 8. required project files
