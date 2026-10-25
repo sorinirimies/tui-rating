@@ -29,7 +29,7 @@ tui-nuances = { version = "0.1.7", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
-default = []
+default = ["theme"]
 # Shared theming via tui-nuances (`Rating::theme`, `Themed`, `Theme`).
 theme = ["dep:tui-nuances"]
 # `RatingState::handle_key` / `handle_mouse` for crossterm events.
