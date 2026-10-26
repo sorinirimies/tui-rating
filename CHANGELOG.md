@@ -1,10 +1,28 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2026-10-26
+
+### Features
+- Enable the tui-nuances theme feature by default
+
+### Miscellaneous
+- Update Cargo.lock
+- Bump tui-nuances to 0.1.7
+
+### Ci
+- Automerge green PRs (workflow_run) + dependabot for actions
+- Automerge major dependabot bumps too
+- Nightly workflow-action bumps
+- Bump softprops/action-gh-release from 2 to 3 (#3)
+- Bump clechasseur/rs-clippy-check from 4 to 5 (#2)
+- Bump actions/checkout from 4 to 7 (#1)
+
 ## [0.4.1] - 2026-10-21
 
 ### Miscellaneous
 - Update Cargo.lock
+- Bump version to 0.4.1
 
 ### Ci
 - Allow SliderState in template-leftover check
