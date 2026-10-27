@@ -25,7 +25,11 @@ exclude = [
 
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
+<<<<<<< HEAD
 tui-nuances = { version = "0.1.9", optional = true }
+=======
+tui-nuances = { version = "0.1.10", optional = true }
+>>>>>>> d8ac627 (chore(deps): bump tui-nuances to 0.1.10)
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
