@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.4] - 2026-10-28
+
+### Bug Fixes
+- Resolve Cargo.toml merge markers
+
+### Miscellaneous
+- Bump tui-nuances to 0.1.10
+- Update Cargo.lock
+- Update Cargo.lock
+
 ## [0.4.2] - 2026-10-26
 
 ### Features
@@ -9,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous
 - Update Cargo.lock
 - Bump tui-nuances to 0.1.7
+- Bump version to 0.4.2
 
 ### Ci
 - Automerge green PRs (workflow_run) + dependabot for actions
