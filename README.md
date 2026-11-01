@@ -5,6 +5,8 @@
 [![tui-rating installs](https://img.shields.io/crates/d/tui-rating?label=tui-rating%20installs&logo=rust&color=orange)](https://crates.io/crates/tui-rating)
 [![CI](https://github.com/sorinirimies/tui-rating/actions/workflows/ci.yml/badge.svg)](https://github.com/sorinirimies/tui-rating/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Audit](https://github.com/sorinirimies/tui-rating/actions/workflows/security.yml/badge.svg)](https://github.com/sorinirimies/tui-rating/actions/workflows/security.yml)
+[![Fuzz](https://github.com/sorinirimies/tui-rating/actions/workflows/fuzz.yml/badge.svg)](https://github.com/sorinirimies/tui-rating/actions/workflows/fuzz.yml)
 
 A customizable **rating toolkit** for [ratatui](https://ratatui.rs): stars, hearts, emoji and smooth bars, gradients, review histograms, badges, bipolar scales, mouse + keyboard input and animation.
 
