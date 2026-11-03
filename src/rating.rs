@@ -133,7 +133,6 @@ pub struct Rating<'a> {
 }
 
 /// Styles derived from a theme.
-#[cfg_attr(not(feature = "theme"), allow(dead_code))]
 #[derive(Debug, Clone, Copy)]
 struct ThemeStyles {
     filled: Style,
