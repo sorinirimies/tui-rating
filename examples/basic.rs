@@ -5,9 +5,9 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
+    Frame,
     layout::{Constraint, Layout},
     widgets::{Block, Paragraph},
-    Frame,
 };
 use tui_rating::{Rating, RatingState};
 
@@ -30,10 +30,10 @@ fn main() -> Result<()> {
     let result = (|| -> Result<()> {
         loop {
             terminal.draw(ui)?;
-            if let Event::Key(k) = event::read()? {
-                if matches!(k.code, KeyCode::Char('q') | KeyCode::Esc) {
-                    return Ok(());
-                }
+            if let Event::Key(k) = event::read()?
+                && matches!(k.code, KeyCode::Char('q') | KeyCode::Esc)
+            {
+                return Ok(());
             }
         }
     })();

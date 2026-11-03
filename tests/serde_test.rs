@@ -1,3 +1,4 @@
+//! Integration tests: serde test.
 #![cfg(feature = "serde")]
 
 use tui_rating::{Easing, RatingState, ValueFormat};

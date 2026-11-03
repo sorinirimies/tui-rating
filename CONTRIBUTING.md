@@ -121,10 +121,10 @@ cargo test -- --nocapture
 
 ```bash
 # Run specific example
-cargo run --example horizontal
+cargo run --example basic
 
 # Or use just
-just example-horizontal
+just example basic
 ```
 
 ### Using Just
@@ -186,7 +186,7 @@ pub fn new(value: f64, max: usize) -> Self {
 - Write unit tests for new functionality
 - Add integration tests (`tests/`) where appropriate
 - Test edge cases (0, max, NaN, out-of-range)
-- Nushell scripts are tested with `just test-scripts`
+- Nushell scripts are tested with `just test-nu`
 
 Example:
 ```rust

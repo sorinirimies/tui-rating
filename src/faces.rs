@@ -180,15 +180,15 @@ impl<'a> SentimentFaces<'a> {
             };
             spans.push(Span::styled(pad_to(face, w), style));
         }
-        if self.show_label {
-            if let Some(n) = self.selected_label() {
-                spans.push(Span::styled(
-                    format!("  {n}"),
-                    Style::default()
-                        .fg(self.color_at(self.selected.unwrap_or(0)))
-                        .add_modifier(Modifier::BOLD),
-                ));
-            }
+        if self.show_label
+            && let Some(n) = self.selected_label()
+        {
+            spans.push(Span::styled(
+                format!("  {n}"),
+                Style::default()
+                    .fg(self.color_at(self.selected.unwrap_or(0)))
+                    .add_modifier(Modifier::BOLD),
+            ));
         }
         Line::from(spans).alignment(self.alignment)
     }

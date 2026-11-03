@@ -279,7 +279,7 @@ or `impl From<&AppTheme> for Theme` and call `.theme(&app_theme)`.
 
 ## 🎬 Examples
 
-Run with `cargo run --example <name>` (or `just example-<name>`).
+Run with `cargo run --example <name>` (or `just example <name>`).
 
 | Example | Description |
 |---------|-------------|
@@ -307,9 +307,9 @@ Requires [`just`](https://github.com/casey/just) and [`nu`](https://www.nushell.
 ```bash
 just check-all     # fmt + clippy + tests + script tests
 just test          # cargo test --all-features
-just test-coverage # llvm-cov HTML report
+just coverage      # llvm-cov HTML report
 just bench         # criterion benchmarks
-just test-scripts  # nushell script tests
+just test-nu       # nushell script tests
 just vhs-all       # regenerate demo GIFs (needs vhs)
 just bump 0.3.0    # bump version, changelog, tag
 ```

@@ -10,8 +10,8 @@ use ratatui::{
 };
 
 use crate::{
-    util::{cell_width, pad_to, render_lines},
     Rating, RatingState, RatingStyle,
+    util::{cell_width, pad_to, render_lines},
 };
 
 /// Several labelled [`RatingState`]s with a focused row: the state of a
@@ -271,18 +271,18 @@ impl<'a> MultiCriteria<'a> {
                 .focused(self.focus == Some(i));
             lines.push(r.line());
         }
-        if self.overall {
-            if let Some(avg) = self.overall_value() {
-                let line = Rating::new(avg, self.max)
-                    .preset(self.style.clone())
-                    .fractional(!self.style.symbols.partials.is_empty())
-                    .half_steps(self.style.symbols.partials.is_empty())
-                    .label(format!("{} ", pad_to(&self.overall_label, label_w)))
-                    .label_style(Style::default().add_modifier(Modifier::BOLD))
-                    .show_value(true)
-                    .line();
-                lines.push(line);
-            }
+        if self.overall
+            && let Some(avg) = self.overall_value()
+        {
+            let line = Rating::new(avg, self.max)
+                .preset(self.style.clone())
+                .fractional(!self.style.symbols.partials.is_empty())
+                .half_steps(self.style.symbols.partials.is_empty())
+                .label(format!("{} ", pad_to(&self.overall_label, label_w)))
+                .label_style(Style::default().add_modifier(Modifier::BOLD))
+                .show_value(true)
+                .line();
+            lines.push(line);
         }
         lines
     }
@@ -346,10 +346,12 @@ mod tests {
             .half_steps(false)
             .preset(RatingStyle::neon());
         assert_eq!(w.lines().len(), 2);
-        assert!(MultiCriteria::new(Vec::<(String, f64)>::new(), 5)
-            .overall(true)
-            .lines()
-            .is_empty());
+        assert!(
+            MultiCriteria::new(Vec::<(String, f64)>::new(), 5)
+                .overall(true)
+                .lines()
+                .is_empty()
+        );
         let area = Rect::new(0, 0, 30, 5);
         let mut buf = Buffer::empty(area);
         MultiCriteria::new([("Service", 4.0)], 5)

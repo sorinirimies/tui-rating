@@ -1,10 +1,11 @@
+//! Integration tests: integration.
 use ratatui::{
+    Terminal,
     backend::TestBackend,
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::Color,
     widgets::{Block, Widget},
-    Terminal,
 };
 use tui_rating::{ItemFill, Rating, RatingState, RatingSymbols};
 

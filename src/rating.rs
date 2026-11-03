@@ -14,9 +14,9 @@ use ratatui::{
 use tui_nuances::{Theme, Themed};
 
 use crate::{
+    RatingState, RatingSymbols,
     preset::RatingStyle,
     util::{align_x, cell_width, format_value, lerp_gradient, pad_to, traffic_light_colors},
-    RatingState, RatingSymbols,
 };
 
 /// How a single rating item is drawn.
@@ -628,8 +628,8 @@ impl<'a> Rating<'a> {
             }
             ItemFill::Empty => (&s.empty, empty_style, false),
         };
-        if !self.disabled {
-            if let Some(c) = self
+        if !self.disabled
+            && let Some(c) = self
                 .color_fn
                 .as_ref()
                 .and_then(|f| (f.0)(index, fill))
@@ -640,9 +640,8 @@ impl<'a> Rating<'a> {
                         None
                     }
                 })
-            {
-                style = style.fg(c);
-            }
+        {
+            style = style.fg(c);
         }
         style = style.add_modifier(if drawn_filled {
             self.modifier
@@ -671,11 +670,7 @@ impl<'a> Rating<'a> {
             Orientation::Horizontal => self.reversed,
             Orientation::Vertical => !self.reversed,
         };
-        if flip {
-            self.max - 1 - pos
-        } else {
-            pos
-        }
+        if flip { self.max - 1 - pos } else { pos }
     }
 
     fn rows(&self) -> Vec<Row<'a>> {

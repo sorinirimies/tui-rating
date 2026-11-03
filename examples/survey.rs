@@ -6,11 +6,11 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
+    Frame,
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::Line,
     widgets::{Block, Paragraph},
-    Frame,
 };
 use tui_rating::{
     LikertLabels, LikertScale, LikertState, MultiCriteria, NpsRating, RangeState, RatingForm,

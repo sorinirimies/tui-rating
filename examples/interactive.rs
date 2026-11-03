@@ -5,10 +5,10 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
+    Frame,
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
     widgets::{Block, Paragraph},
-    Frame,
 };
 use tui_rating::{Rating, RatingState, RatingSymbols, ThemeSwitcher};
 
@@ -133,10 +133,11 @@ fn main() -> Result<()> {
     let result = (|| -> Result<()> {
         loop {
             terminal.draw(|f| app.ui(f))?;
-            if let Event::Key(k) = event::read()? {
-                if k.kind == KeyEventKind::Press && app.handle(k.code) {
-                    return Ok(());
-                }
+            if let Event::Key(k) = event::read()?
+                && k.kind == KeyEventKind::Press
+                && app.handle(k.code)
+            {
+                return Ok(());
             }
         }
     })();

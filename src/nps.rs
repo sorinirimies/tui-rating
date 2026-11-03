@@ -135,13 +135,13 @@ impl<'a> NpsRating<'a> {
             spans.push(Span::raw(" "));
             spans.push(Span::styled(n.to_string(), style));
         }
-        if self.show_category {
-            if let Some(c) = self.category() {
-                spans.push(Span::styled(
-                    format!("  {}", c.label()),
-                    Style::default().fg(c.color()).add_modifier(Modifier::BOLD),
-                ));
-            }
+        if self.show_category
+            && let Some(c) = self.category()
+        {
+            spans.push(Span::styled(
+                format!("  {}", c.label()),
+                Style::default().fg(c.color()).add_modifier(Modifier::BOLD),
+            ));
         }
         Line::from(spans).alignment(self.alignment)
     }
@@ -331,10 +331,12 @@ mod tests {
         let r = NpsRating::new(Some(99));
         assert_eq!(r.category(), Some(NpsCategory::Promoter));
         assert!(NpsRating::new(None).category().is_none());
-        assert!(NpsRating::new(Some(3))
-            .show_category(true)
-            .text()
-            .ends_with("Detractor"));
+        assert!(
+            NpsRating::new(Some(3))
+                .show_category(true)
+                .text()
+                .ends_with("Detractor")
+        );
         let area = Rect::new(0, 0, 40, 1);
         let mut buf = Buffer::empty(area);
         NpsRating::new(Some(10))

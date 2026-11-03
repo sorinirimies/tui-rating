@@ -1,4 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+//! Benchmarks: render.
+#![allow(missing_docs)] // criterion_group! generates an undocumented fn
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use ratatui::{buffer::Buffer, layout::Rect, widgets::Widget};
 use tui_rating::{Rating, RatingBar, RatingHistogram, RatingState, RatingStyle, RatingSymbols};
 

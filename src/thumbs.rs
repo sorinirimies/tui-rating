@@ -286,13 +286,13 @@ impl<'a> ThumbsRating<'a> {
                 Style::default().fg(c).add_modifier(Modifier::BOLD),
             ));
         }
-        if self.show_ratio {
-            if let Some(r) = self.ratio() {
-                spans.push(Span::styled(
-                    format!("  {}%", (r * 100.0).round() as i64),
-                    Style::default().fg(Color::DarkGray),
-                ));
-            }
+        if self.show_ratio
+            && let Some(r) = self.ratio()
+        {
+            spans.push(Span::styled(
+                format!("  {}%", (r * 100.0).round() as i64),
+                Style::default().fg(Color::DarkGray),
+            ));
         }
         Line::from(spans).alignment(self.alignment)
     }
@@ -327,10 +327,12 @@ mod tests {
         let t = ThumbsRating::new(5, 9).symbols("▲", "▼").show_net(true);
         assert_eq!(t.text(), "▲ 5  ▼ 9  -4");
         assert_eq!(ThumbsRating::new(2500, 0).compact(true).net(), 2500);
-        assert!(ThumbsRating::new(2500, 0)
-            .compact(true)
-            .text()
-            .contains("2.5k"));
+        assert!(
+            ThumbsRating::new(2500, 0)
+                .compact(true)
+                .text()
+                .contains("2.5k")
+        );
         assert_eq!(ThumbsRating::new(0, 0).ratio(), None);
         let t = ThumbsRating::new(0, 0).show_ratio(true).show_net(true);
         assert!(t.text().ends_with("+0"));

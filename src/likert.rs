@@ -225,11 +225,11 @@ impl<'a> LikertScale<'a> {
     pub fn line(&self) -> Line<'a> {
         let dim = Style::default().fg(Color::DarkGray);
         let mut spans = Vec::new();
-        if self.mode == LikertLabels::Ends {
-            if let Some(first) = self.labels.first() {
-                spans.push(Span::styled(first.clone(), dim));
-                spans.push(Span::raw(" "));
-            }
+        if self.mode == LikertLabels::Ends
+            && let Some(first) = self.labels.first()
+        {
+            spans.push(Span::styled(first.clone(), dim));
+            spans.push(Span::raw(" "));
         }
         for i in 0..self.labels.len() {
             if i > 0 {

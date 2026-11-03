@@ -9,9 +9,9 @@ use ratatui::{
 };
 
 use crate::{
+    LabelPosition, ValueFormat,
     preset::RatingStyle,
     util::{bar_cells, cell_width, eighths, format_value, lerp_gradient, traffic_light_colors},
-    LabelPosition, ValueFormat,
 };
 
 /// A continuous bar rating such as `████▌░░░░ 3.7/5`, with smooth block-eighth

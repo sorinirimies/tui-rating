@@ -257,17 +257,17 @@ impl<'a> RatingTrend<'a> {
                 Span::styled(BLOCKS[l.min(7)], Style::default().fg(color))
             })
             .collect();
-        if self.show_latest {
-            if let Some(last) = self.values.last() {
-                spans.push(Span::styled(
-                    format!(" {last:.1}"),
-                    Style::default().add_modifier(Modifier::BOLD),
-                ));
-                if self.values.len() >= 2 {
-                    let prev = self.values[self.values.len() - 2];
-                    spans.push(Span::raw(" "));
-                    spans.push(RatingDelta::between(prev, *last).span());
-                }
+        if self.show_latest
+            && let Some(last) = self.values.last()
+        {
+            spans.push(Span::styled(
+                format!(" {last:.1}"),
+                Style::default().add_modifier(Modifier::BOLD),
+            ));
+            if self.values.len() >= 2 {
+                let prev = self.values[self.values.len() - 2];
+                spans.push(Span::raw(" "));
+                spans.push(RatingDelta::between(prev, *last).span());
             }
         }
         Line::from(spans).alignment(self.alignment)

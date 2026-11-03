@@ -1,11 +1,11 @@
 //! Whole-screen snapshots rendered through a `TestBackend`.
 
 use ratatui::{
+    Terminal,
     backend::TestBackend,
     layout::{Alignment, Constraint, Layout},
     style::Color,
     widgets::Block,
-    Terminal,
 };
 use tui_rating::{
     BadgeKind, BipolarRating, LabelPosition, Orientation, Rating, RatingBadge, RatingBar,

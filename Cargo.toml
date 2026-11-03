@@ -1,16 +1,19 @@
 [package]
 name = "tui-rating"
 version = "0.4.4"
-edition = "2021"
+edition = "2024"
 authors = ["Sorin Irimies <sorinirimies@gmail.com>"]
 license = "MIT"
 description = "A customizable rating (stars, hearts, ...) widget for ratatui"
 repository = "https://github.com/sorinirimies/tui-rating"
+homepage = "https://github.com/sorinirimies/tui-rating"
+documentation = "https://docs.rs/tui-rating"
 readme = "README.md"
 keywords = ["tui", "rating", "ratatui", "terminal", "widget"]
 categories = ["command-line-interface", "gui", "visualization", "rendering"]
-rust-version = "1.88.0"
+rust-version = "1.88"
 exclude = [
+    ".cargo/**",
     ".gitea/**",
     ".github/**",
     ".zed/**",
@@ -69,6 +72,19 @@ path = "examples/custom.rs"
 [[example]]
 name = "alignment"
 path = "examples/alignment.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+
+[lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+unwrap_used = "warn"
 
 [profile.dev]
 opt-level = 1

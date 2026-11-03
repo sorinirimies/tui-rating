@@ -1,6 +1,6 @@
 # Examples
 
-Run any example with `cargo run --example <name>` or `just example-<name>`.
+Run any example with `cargo run --example <name>` or `just example <name>`.
 Demo GIFs are generated with [VHS](https://github.com/charmbracelet/vhs) via `just vhs-all`.
 
 ## gallery

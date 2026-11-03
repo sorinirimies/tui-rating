@@ -13,10 +13,10 @@ use crossterm::{
     execute,
 };
 use ratatui::{
+    Frame,
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Paragraph},
-    Frame,
 };
 use tui_rating::{Rating, RatingState, RatingStyle, RatingSymbols, ValueFormat};
 

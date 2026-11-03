@@ -7,11 +7,11 @@ use std::time::{Duration, Instant};
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Span},
     widgets::{Block, Paragraph},
-    Frame,
 };
 use tui_rating::{
     BadgeKind, BipolarRating, LabelPosition, LikertLabels, LikertScale, MultiCriteria, NpsRating,
@@ -37,11 +37,7 @@ const ANIM_PAGE_TICKS: u32 = 42;
 /// Triangle wave 0..=1 with period `period` ticks, shifted by `offset` ticks.
 fn wave(ticks: u32, period: u32, offset: u32) -> f64 {
     let p = f64::from((ticks + offset) % period) / f64::from(period);
-    if p < 0.5 {
-        p * 2.0
-    } else {
-        2.0 - p * 2.0
-    }
+    if p < 0.5 { p * 2.0 } else { 2.0 - p * 2.0 }
 }
 
 /// Sweep a value over `0..=max` (eased), quantised to `step`.
@@ -117,18 +113,18 @@ fn main() -> Result<()> {
         loop {
             terminal.draw(|f| draw(f, &app))?;
             let timeout = tick.saturating_sub(last.elapsed());
-            if event::poll(timeout)? {
-                if let Event::Key(k) = event::read()? {
-                    if k.kind != KeyEventKind::Press {
-                        continue;
-                    }
-                    match k.code {
-                        KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                        KeyCode::Right | KeyCode::Tab => app.goto(app.page + 1),
-                        KeyCode::Left => app.goto(app.page + PAGES.len() - 1),
-                        KeyCode::Char(' ') => app.paused = !app.paused,
-                        _ => {}
-                    }
+            if event::poll(timeout)?
+                && let Event::Key(k) = event::read()?
+            {
+                if k.kind != KeyEventKind::Press {
+                    continue;
+                }
+                match k.code {
+                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                    KeyCode::Right | KeyCode::Tab => app.goto(app.page + 1),
+                    KeyCode::Left => app.goto(app.page + PAGES.len() - 1),
+                    KeyCode::Char(' ') => app.paused = !app.paused,
+                    _ => {}
                 }
             }
             if last.elapsed() >= tick {

@@ -9,8 +9,8 @@ use ratatui::{
 };
 
 use crate::{
-    util::{cell_width, pad_to},
     LabelPosition, RatingBar, RatingDelta,
+    util::{cell_width, pad_to},
 };
 
 /// Compares two items (versions, products, before/after) as two bars plus a

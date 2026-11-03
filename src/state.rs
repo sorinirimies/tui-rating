@@ -149,11 +149,7 @@ impl RatingState {
 
     /// Step size: `0.5` with half steps, otherwise `1.0`.
     pub fn step(&self) -> f64 {
-        if self.half_steps {
-            0.5
-        } else {
-            1.0
-        }
+        if self.half_steps { 0.5 } else { 1.0 }
     }
 
     /// Sets the value, clamping into range. Non-finite input resets to `0.0`.
